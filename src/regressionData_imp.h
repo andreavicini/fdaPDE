@@ -241,7 +241,7 @@ void RegressionData::setObservations(SEXP Robservations)
 	//for(auto i=0;i<observations_indices_.size();++i)	std::cout<<observations_indices_[i]<<std::endl;
 }
 
-void RegressionDataTime::setObservationsTime(SEXP Robservations)
+void RegressionData::setObservationsTime(SEXP Robservations)
 {
 	UInt n_obs_ = Rf_length(Robservations);
 	observations_.resize(n_obs_);
@@ -283,7 +283,7 @@ void RegressionData::setCovariates(SEXP Rcovariates)
 	}
 }
 
-void RegressionDataTime::setDOF_matrix(SEXP RDOF_matrix)
+void RegressionData::setDOF_matrix(SEXP RDOF_matrix)
 {
 	n_ = INTEGER(Rf_getAttrib(RDOF_matrix, R_DimSymbol))[0];
 	p_ = INTEGER(Rf_getAttrib(RDOF_matrix, R_DimSymbol))[1];
@@ -319,7 +319,7 @@ void RegressionData::setLocations(SEXP Rlocations)
 	}
 }
 
-void RegressionDataTime::setTimeLocations(SEXP Rtime_locations)
+void RegressionData::setTimeLocations(SEXP Rtime_locations)
 {
 	UInt n_time_loc_ = Rf_length(Rtime_locations);
   time_locations_.resize(n_time_loc_);
