@@ -54,5 +54,11 @@ const std::vector<Real> IntegratorTetrahedronP1::WEIGHTS = std::vector<Real>{ {
 const std::vector<Point> IntegratorTetrahedronP1::NODES = std::vector<Point> { {
 Point(1./4 ,1./4 ,1./4)
 } };
-//#endif
 
+const std::vector<Real> IntegratorGaussP3::WEIGHTS = std::vector<Real>{ {1, 1} };
+const std::vector<Real> IntegratorGaussP3::NODES = std::vector<Real> { {-1./sqrt(3),1./sqrt(3)} };
+
+const std::vector<Real> IntegratorGaussP5::WEIGHTS = std::vector<Real>{ {5./9, 8./9, 5./9} };
+const std::vector<Real> IntegratorGaussP5::NODES = std::vector<Real> { {-sqrt(3)/sqrt(5), 0, sqrt(3)/sqrt(5)} };
+
+//#endif

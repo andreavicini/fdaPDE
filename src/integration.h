@@ -25,7 +25,7 @@ class IntegratorTriangleP4{
 	static const std::vector<Point> NODES;
 	static const std::vector<Real> WEIGHTS;
 	};
-	
+
 class IntegratorTetrahedronP2{
 	public:
 	static const UInt ORDER = 1;
@@ -35,7 +35,7 @@ class IntegratorTetrahedronP2{
 	static const std::vector<Point> NODES;
 	static const std::vector<Real> WEIGHTS;
 	};
-	
+
 class IntegratorTetrahedronP1{
 	public:
 	static const UInt ORDER = 1;
@@ -46,6 +46,25 @@ class IntegratorTetrahedronP1{
 	static const std::vector<Real> WEIGHTS;
 	};
 
+	class IntegratorGaussP3{
+	  public:
+		static const UInt ORDER = 1;
+		//Number of nodes
+		static const UInt NNODES = 2;
+		//Point locations
+		static const std::vector<Real> NODES;
+		static const std::vector<Real> WEIGHTS;
+		};
+
+	class IntegratorGaussP5{
+	  public:
+	  static const UInt ORDER = 1;
+		//Number of nodes
+		static const UInt NNODES = 3;
+		//Point locations
+		static const std::vector<Real> NODES;
+		static const std::vector<Real> WEIGHTS;
+		};
+
 //#include "integration_imp.hpp"
 #endif
-
