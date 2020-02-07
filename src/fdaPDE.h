@@ -6,7 +6,7 @@
 #define R_NO_REMAP
 #include <R.h>
 #include <Rdefines.h>
-#include <Rinternals.h> 
+#include <Rinternals.h>
 #endif
 
 #include <stdint.h>
@@ -37,6 +37,7 @@ typedef Eigen::Matrix<Real,Eigen::Dynamic,Eigen::Dynamic> MatrixXr;
 typedef Eigen::Matrix<UInt,Eigen::Dynamic,Eigen::Dynamic> MatrixXi;
 typedef Eigen::Matrix<Real,Eigen::Dynamic,1> VectorXr;
 typedef Eigen::Matrix<UInt,Eigen::Dynamic,1> VectorXi;
+typedef Eigen::Matrix<VectorXr,Eigen::Dynamic,Eigen::Dynamic> MatrixXv;
 typedef Eigen::SparseMatrix<Real> SpMat;
 typedef Eigen::SparseVector<Real> SpVec;
 typedef Eigen::Triplet<Real> coeff;
