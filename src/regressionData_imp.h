@@ -108,7 +108,7 @@ RegressionData::RegressionData(SEXP Rlocations, SEXP Rtime_locations, SEXP Robse
 	setLocations(Rlocations);
 	setTimeLocations(Rtime_locations);
 	setIncidenceMatrix(RincidenceMatrix);
-	setObservations(Robservations);
+	setObservationsTime(Robservations);
 	setCovariates(Rcovariates);
 	setNrealizations(Rnrealizations);
 	setDOF_matrix(RDOF_matrix);
@@ -241,6 +241,32 @@ void RegressionData::setObservations(SEXP Robservations)
 	//for(auto i=0;i<observations_indices_.size();++i)	std::cout<<observations_indices_[i]<<std::endl;
 }
 
+void RegressionDataTime::setObservationsTime(SEXP Robservations)
+{
+	UInt n_obs_ = Rf_length(Robservations);
+	observations_.resize(n_obs_);
+	observations_indices_.reserve(n_obs_);
+
+	UInt count = 0;
+	locations_by_nodes_ = (locations_.size() == 0 && nRegions_ == 0) ? true : false;
+
+	for(auto i=0;i<n_obs_;++i)
+	{
+		if(!ISNA(REAL(Robservations)[i]))
+		{
+			observations_(i) = REAL(Robservations)[i];
+			observations_indices_.push_back(i);
+		}
+		else
+		{
+			observations_(i) = 0.0;
+			observations_na_.push_back(i);
+		}
+	}
+	//std::cout<<"Observations #"<<observations_.size()<<std::endl<<observations_<<std::endl;
+	//for(auto i=0;i<observations_indices_.size();++i)	std::cout<<observations_indices_[i]<<std::endl;
+}
+
 void RegressionData::setCovariates(SEXP Rcovariates)
 {
 	n_ = INTEGER(Rf_getAttrib(Rcovariates, R_DimSymbol))[0];
@@ -253,6 +279,22 @@ void RegressionData::setCovariates(SEXP Rcovariates)
 		for(auto j=0; j<p_ ; ++j)
 		{
 			covariates_(i,j)=REAL(Rcovariates)[i+ n_*j];
+		}
+	}
+}
+
+void RegressionDataTime::setDOF_matrix(SEXP RDOF_matrix)
+{
+	n_ = INTEGER(Rf_getAttrib(RDOF_matrix, R_DimSymbol))[0];
+	p_ = INTEGER(Rf_getAttrib(RDOF_matrix, R_DimSymbol))[1];
+
+	dof_matrix_.resize(n_, p_);
+
+	for(auto i=0; i<n_; ++i)
+	{
+		for(auto j=0; j<p_ ; ++j)
+		{
+			dof_matrix_(i,j)=REAL(RDOF_matrix)[i+ n_*j];
 		}
 	}
 }
@@ -274,6 +316,17 @@ void RegressionData::setLocations(SEXP Rlocations)
 				locations_.emplace_back(REAL(Rlocations)[i+ n_*0],REAL(Rlocations)[i+ n_*1],REAL(Rlocations)[i+ n_*2]);
 			}
 		}
+	}
+}
+
+void RegressionDataTime::setTimeLocations(SEXP Rtime_locations)
+{
+	UInt n_time_loc_ = Rf_length(Rtime_locations);
+  time_locations_.resize(n_time_loc_);
+
+	for(auto i=0;i<n_time_loc_;++i)
+	{
+		time_locations_[i] = REAL(Rtime_locations)[i];
 	}
 }
 
