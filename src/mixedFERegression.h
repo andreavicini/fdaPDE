@@ -9,82 +9,110 @@
 #include "regressionData.h"
 #include "solver.h"
 #include "integratePsi.h"
+#include "kronecker_product.h"
 #include <memory>
 
-/*! A base class for the smooth regression. 
+/*! A base class for the smooth regression.
 */
-template<typename InputHandler, typename Integrator, UInt ORDER, UInt mydim, UInt ndim>
+template<typename InputHandler, typename IntegratorSpace, UInt ORDER, typename IntegratorTime, UInt SPLINE_DEGREE, UInt ORDER_DERIVATIVE, UInt mydim, UInt ndim>
 class MixedFERegressionBase
 {
 	protected:
-		
+
 	const MeshHandler<ORDER, mydim, ndim> &mesh_;
+	const std::vector<Real>& mesh_time_;
+	const UInt N_; //! Number of spatial basis functions.
+	const UInt M_;
+
 	const InputHandler& regressionData_;
-	
+
+	// For only space problems
 	//  system matrix= 	|psi^T * A *psi | lambda R1^T  |   +  |psi^T * A * (-H) * psi |  O |   =  matrixNoCov + matrixOnlyCov
 	//	                |     R1        | R0	      |      |         O             |  O |
-	
-	SpMat matrixNoCov_;	//! System matrix with psi^T*psi or psi^T*A*psi in north-west block  (is the full system matrix if no covariates)
-	//SpMat matrixOnlyCov_; //! coeffmatrix=matrixNoCov+matrixOnlyCov
-	SpMat R1_;	//! North-east block of system matrix matrixNoCov_
-	SpMat R0_;	//! South-east block of system matrix matrixNoCov_
-	SpMat psi_; //! Psi matrix of the model
+
+	//For space time problems
+	// Separable case:
+	//  system matrix= 	| B^T * Ak *B + lambdaT*Ptk |  -lambdaS*R1k^T  |   +  |B^T * Ak * (-H) * B |  O |   =  matrixNoCov + matrixOnlyCov
+	//	                |      -lambdaS*R1k^T       |  -lambdaS*R0k	   |      |         O          |  O |
+
+	// Parabolic case:
+	//  system matrix= 	|          B^T * Ak *B           | -lambdaS*(R1k^T+lambdaT*LR0k)  |   +  |B^T * Ak * (-H) * B |  O |   =  matrixNoCov + matrixOnlyCov
+	//	                | -lambdaS*(R1k^T+lambdaT*LR0k)  |        -lambdaS*R0k	          |      |         O          |  O |
+
+	SpMat matrixNoCov_;	//! System matrix without
+
+	SpMat R1_;	 //! R1 matrix of the model
+	SpMat R0_;	 //! Mass matrix in space
+	SpMat psi_;  //! Psi matrix of the model
+	MatrixXr R_; //! R1 ^T * R0^-1 * R1
+
+
+	SpMat Psk_; 	//! kron(IM,Ps) (separable version)
+	SpMat Ptk_; 	//! kron(Pt,IN) (separable version)
+	SpMat R1k_; 	//! kron(IM,R1)
+	SpMat LR0k_; 	//! kron(L,R0) (parabolic version)
+	SpMat R0k_;  	//! kron(IM,R0)
+	SpMat B_; 		//! kron(Phi,Psi)
+
+
+	SpMat A_; 		//! A_.asDiagonal() areal matrix
+
+
 	MatrixXr U_;	//! psi^T * W or psi^T * A * W padded with zeros, needed for Woodbury decomposition
 	MatrixXr V_;   //! W^T*psi, if pointwise data is U^T, needed for Woodbury decomposition
-	VectorXr z_; //! Observations
-		
-		
+
 	Eigen::SparseLU<SpMat> matrixNoCovdec_; // Stores the factorization of matrixNoCov_
 	Eigen::PartialPivLU<MatrixXr> Gdec_;	// Stores factorization of G =  C + [V * matrixNoCov^-1 * U]
 	Eigen::PartialPivLU<MatrixXr> WTW_;	// Stores the factorization of W^T * W
 	bool isWTWfactorized_ = false;
 	bool isRcomputed_ = false;
-	MatrixXr R_; //R1 ^T * R0^-1 * R1
-	
-	MatrixXr Q_;  //! Identity - H, projects onto the orthogonal subspace
- 	MatrixXr H_; //! The hat matrix of the regression
-	
-	VectorXr A_; //A_.asDiagonal() = diag(|D_1|,...,|D_N|) areal matrix, = identity nnodesxnnodes if pointwise data
+	Eigen::SparseLU<SpMat> R_; //! Stores the factorization of R0k_
 
-	VectorXr _rightHandSide;                     //!A Eigen::VectorXr: Stores the system right hand side.
-	std::vector<VectorXr> _solution; //!A Eigen::VectorXr: Stores the system solution.
-	std::vector<Real> _dof; //! A vector storing the computed dofs
-	
+
+	VectorXr rhs_ft_correction_;	//! right hand side correction for the forcing term:
+	VectorXr rhs_ic_correction_;	//! Initial condition correction (parabolic case)
+	VectorXr _rightHandSide;      //! A Eigen::VectorXr: Stores the system right hand side.
+	MatrixXv _solution; 					//! A Eigen::MatrixXv: Stores the system solution.
+	MatrixXr _dof;          			//! A Eigen::MatrixXr storing the computed dofs
+	MatrixXr _GCV;	 //! A Eigen::MatrixXr storing the computed GCV
+	UInt bestLambdaS_=0;	//!Stores the index of the best lambdaS according to GCV
+	UInt bestLambdaT_=0;	//!Stores the index of the best lambdaT according to GCV
+	Real _bestGCV=10e20;	//!Stores the value of the best GCV
+	MatrixXv _beta;		//! A Eigen::MatrixXv storing the computed beta coefficients
+
 	bool isSpaceVarying=false; // used to distinguish whether to use the forcing term u in apply() or not
-	
+
 	//! A member function computing the Psi matrix
 	void setPsi();
-	//! A member function computing the no-covariates version of the system matrix 
-	void buildMatrixNoCov(const SpMat& Psi,  const SpMat& R1,  const SpMat& R0);
-	// A member function computing the matrix to be added to matrixNoCov_ to obtain the full system matrix
-	//void buildMatrixOnlyCov(const SpMat& Psi, const MatrixXr& H);
+	//! A method computing the no-covariates version of the system matrix
+	void buildMatrixNoCov(const SpMat& NWblock,  const SpMat& SWblock,  const SpMat& SEblock);
 	//! A function that given a vector u, performs Q*u efficiently
 	MatrixXr LeftMultiplybyQ(const MatrixXr& u);
 	//! A function which adds Dirichlet boundary conditions before solving the system ( Remark: BC for areal data are not implemented!)
 	void addDirichletBC();
-	//! A member function which builds the Q matrix
-	void setQ();
-	//! A member function which builds the H matrix
- 	void setH();
  	//! A member function which builds the A vector containing the areas of the regions in case of areal data
-	void setA(); 
-	
+	void setA();
 	//! A member function returning the system right hand data
 	void getRightHandData(VectorXr& rightHandData);
-	
-	//! A member function computing the dofs
-	void computeDegreesOfFreedom(UInt output_index, Real lambda);
-	//! A function computing dofs in case of exact GCV, it is called by computeDegreesOfFreedom
-	void computeDegreesOfFreedomExact(UInt output_index, Real lambda);
-	//! A function computing dofs in case of stochastic GCV, it is called by computeDegreesOfFreedom
-	void computeDegreesOfFreedomStochastic(UInt output_index, Real lambda);
-    
-    //! A function to factorize the system, using Woodbury decomposition when there are covariates
+	//! A method which builds all the space matrices
+	void buildSpaceMatrices();
+	//! A method which builds all the matrices needed for assembling matrixNoCov_
+	void buildMatrices();
+	//! A method computing the dofs
+	void computeDegreesOfFreedom(UInt output_indexS, UInt output_indexT, Real lambdaS, Real lambdaT, const SpMat& NWblock);
+	//! A method computing dofs in case of exact GCV, it is called by computeDegreesOfFreedom
+	void computeDegreesOfFreedomExact(UInt output_indexS, UInt output_indexT, Real lambdaS, Real lambdaT, const SpMat& NWblock);
+	//! A method computing dofs in case of stochastic GCV, it is called by computeDegreesOfFreedom
+	void computeDegreesOfFreedomStochastic(UInt output_indexS, UInt output_indexT, Real lambdaS, Real lambdaT, const SpMat& NWblock);
+	//! A method computing GCV from the dofs
+	void computeGeneralizedCrossValidation(UInt output_indexS, UInt output_indexT, Real lambdaS, Real lambdaT, const SpMat& NWblock);
+
+  //! A function to factorize the system, using Woodbury decomposition when there are covariates
 	void system_factorize();
-	//! A function which solves the factorized system 
+	//! A function which solves the factorized system
 	template<typename Derived>
 	MatrixXr system_solve(const Eigen::MatrixBase<Derived>&);
-	
+
 	public:
 	//!A Constructor.
 	MixedFERegressionBase(const MeshHandler<ORDER,mydim,ndim>& mesh, const InputHandler& regressionData): mesh_(mesh), regressionData_(regressionData) {};
@@ -96,7 +124,7 @@ class MixedFERegressionBase
 	*/
 	template<typename A>
 	void apply(EOExpr<A> oper,const ForcingTerm & u);
-	
+
 	//! A inline member that returns a VectorXr, returns the whole solution_.
 	inline std::vector<VectorXr> const & getSolution() const{return _solution;};
 	//! A function returning the computed dofs of the model
@@ -113,6 +141,50 @@ public:
 	{
 		std::cout << "Option not implemented! \n";
 	}
+};
+
+
+//! A class for the construction of the temporal matrices needed for the parabolic case
+template<typename InputHandler, typename Integrator, UInt SPLINE_DEGREE, UInt ORDER_DERIVATIVE>
+class MixedSplineRegression
+{
+	private:
+		const std::vector<Real>& mesh_time_;
+		const InputHandler& regressionData_;
+
+		SpMat phi_;   //! Matrix of the evaluations of the spline basis functions in the time locations
+		SpMat Pt_;
+		SpMat timeMass_; //! Mass matrix in time
+
+	public:
+		MixedSplineRegression(const std::vector<Real>& mesh_time, const InputHandler& regressionData):mesh_time_(mesh_time), regressionData_(regressionData){};
+
+    void setPhi();
+		void setTimeMass();
+    void smoothSecondDerivative();
+
+		inline SpMat const & getPt() const { return Pt_; }
+		inline SpMat const & getPhi() const { return phi_; }
+		inline SpMat const & getTimeMass() const { return timeMass_; }
+
+};
+
+//! A class for the construction of the temporal matrices needed for the separable case
+template<typename InputHandler>
+class MixedFDRegression
+{
+	private:
+		const std::vector<Real>& mesh_time_;
+		const InputHandler& regressionData_;
+
+		SpMat derOpL_; //!matrix associated with derivation in time
+
+	public:
+		MixedFDRegression(const std::vector<Real>& mesh_time, const InputHandler& regressionData):mesh_time_(mesh_time), regressionData_(regressionData){};
+
+    void setDerOperator(); //! sets derOpL_
+		inline SpMat const & getDerOpL() const { return derOpL_; }
+
 };
 
 #include "mixedFERegression_imp.h"
