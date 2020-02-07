@@ -1,8 +1,12 @@
 #ifndef __SOLVER_HPP__
 #define __SOLVER_HPP__
 
-#include "fdaPDE.h"
+#define JOB_INIT -1
+#define JOB_END -2
+#define USE_COMM_WORLD -987654
 
+#include "fdaPDE.h"
+#include "../inst/include/dmumps_c.h"
 
 //!  A Linear System QR solver class
 /*!
@@ -41,7 +45,7 @@ class Symmetric{
 class Cholesky{
 	public:
 	static void solve(MatrixXr const & A, VectorXr const & b,VectorXr &x){x=A.ldlt().solve(b);};
-}; 
+};
 
 //!  A Linear System LU sparse solver class
 /*!
@@ -171,6 +175,67 @@ class BiCGSTABILUT{
 	};
 };
 
+
+class Mumps{
+	public:
+		template<typename Derived1,typename Derived2>
+    static void solve(SpMat const & A,const Eigen::MatrixBase<Derived1> & b, Eigen::MatrixBase<Derived2> & x )
+	{
+
+		const Real *values = A.valuePtr();
+		const UInt *inner = A.innerIndexPtr();
+		const UInt *outer = A.outerIndexPtr();
+
+		UInt n = A.cols();
+
+		std::vector<int> irn;
+		std::vector<int> jcn;
+		std::vector<double> a;
+
+		for (int j=0; j<A.outerSize(); ++j)
+		{
+			for (SpMat::InnerIterator it(A,j); it; ++it)
+			{
+				if(it.col()>=it.row())
+				{
+					irn.push_back(it.row()+1);
+					jcn.push_back(it.col()+1);
+					a.push_back(it.value());
+				}
+			}
+		}
+
+    DMUMPS_STRUC_C id;
+
+		//Real *rhs = b.array();
+    Real rhs[b.rows()*b.cols()];
+		for(UInt j = 0; j < b.cols(); ++j)
+			for(UInt i = 0; i < b.rows(); ++i)
+				rhs[i+j*b.rows()] = b(i,j);
+    /* Initialize a MUMPS instance. Use MPI_COMM_WORLD */
+    id.job=JOB_INIT; id.par=1; id.sym=2; id.comm_fortran=USE_COMM_WORLD;
+    dmumps_c(&id);
+    /* Define the problem on the host */
+
+		id.n = n; id.nz =irn.size(); id.irn=irn.data(); id.jcn=jcn.data();
+		id.a = a.data();
+		id.lrhs = b.rows(); id.nrhs = b.cols(); id.rhs = rhs;
+
+    #define ICNTL(I) icntl[(I)-1] /* macro s.t. indices match documentation */
+    /* No outputs */
+    id.ICNTL(1)=-1; id.ICNTL(2)=-1; id.ICNTL(3)=-1; id.ICNTL(4)=0;
+		id.ICNTL(14)=200;
+    /* Call the MUMPS package. */
+    id.job=6;
+    dmumps_c(&id);
+    id.job=JOB_END; dmumps_c(&id); /* Terminate instance */
+
+		for(UInt j = 0; j < b.cols(); ++j)
+			for(UInt i = 0; i < b.rows(); ++i)
+				x(i,j) = rhs[i+j*b.rows()];
+
+   };
+};
 
 
 #endif
