@@ -263,7 +263,7 @@ smooth.FEM<-function(locations = NULL, observations, FEMbasis, lambda,
   if(!is.null(DOF_matrix))
     DOF=FALSE
 
-  space_varying=checkSmoothingParameters(locations, observations, FEMbasis, lambda, covariates, incidence_matrix, BC, GCV, PDE_parameters, GCVMETHOD , nrealizations, DOF, DOF_matrix)
+  space_varying=checkSmoothingParameters(locations, observations, FEMbasis, lambda, covariates, incidence_matrix, BC, GCV, PDE_parameters, GCVMETHOD , nrealizations)
 
   ## Coverting to format for internal usage
   if(!is.null(locations))

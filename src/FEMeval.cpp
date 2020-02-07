@@ -567,5 +567,3 @@ SEXP eval_FEM_time_nodes(SEXP Rns, SEXP Rmesh_time, SEXP Rtime, SEXP Rcoef, SEXP
 }
 
 }
-
-}

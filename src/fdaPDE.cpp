@@ -10,24 +10,24 @@
 #include "FPCAData.h"
 #include "FPCAObject.h"
 #include "solverdefinitions.h"
-//#include <chrono>      
+//#include <chrono>
 
 #include "mixedFEFPCA.h"
 #include "mixedFERegression.h"
-#include "mixedFEFPCAfactory.h" 
-  
+#include "mixedFEFPCAfactory.h"
+
 template<typename InputHandler, typename Integrator, UInt ORDER, UInt mydim, UInt ndim>
 SEXP regression_skeleton(InputHandler &regressionData, SEXP Rmesh)
 {
 	MeshHandler<ORDER, mydim, ndim> mesh(Rmesh);
 	MixedFERegression<InputHandler, Integrator,ORDER, mydim, ndim> regression(mesh,regressionData);
-	
+
 	regression.apply();
 
 	const std::vector<VectorXr>& solution = regression.getSolution();
 	const std::vector<Real>& dof = regression.getDOF();
 
-	//Copy result in R memory                
+	//Copy result in R memory
 	SEXP result = NILSXP;
 	result = PROTECT(Rf_allocVector(VECSXP, 2));
 	SET_VECTOR_ELT(result, 0, Rf_allocMatrix(REALSXP, solution[0].size(), solution.size()));
@@ -65,7 +65,7 @@ SEXP FPCA_skeleton(FPCAData &fPCAData, SEXP Rmesh, std::string validation)
 	const std::vector<Real>& cumsum_percentage = fpca->getCumulativePercentage();
 	const std::vector<Real>& var = fpca->getVar();
 
-	//Copy result in R memory  
+	//Copy result in R memory
 	SEXP result = NILSXP;
 	result = PROTECT(Rf_allocVector(VECSXP, 7));
 	SET_VECTOR_ELT(result, 0, Rf_allocMatrix(REALSXP, loadings[0].size(), loadings.size()));
@@ -80,14 +80,14 @@ SEXP FPCA_skeleton(FPCAData &fPCAData, SEXP Rmesh, std::string validation)
 		for(UInt i = 0; i < loadings[0].size(); i++)
 			rans[i + loadings[0].size()*j] = loadings[j][i];
 	}
-	
+
 	Real *rans1 = REAL(VECTOR_ELT(result, 1));
 	for(UInt j = 0; j < scores.size(); j++)
 	{
 		for(UInt i = 0; i < scores[0].size(); i++)
 			rans1[i + scores[0].size()*j] = scores[j][i];
 	}
-	
+
 	Real *rans2 = REAL(VECTOR_ELT(result, 2));
 	for(UInt i = 0; i < lambdas.size(); i++)
 	{
@@ -99,7 +99,7 @@ SEXP FPCA_skeleton(FPCAData &fPCAData, SEXP Rmesh, std::string validation)
 	{
 		rans3[i] = variance_explained[i];
 	}
-	
+
 	Real *rans4 = REAL(VECTOR_ELT(result, 4));
 	for(UInt i = 0; i < cumsum_percentage.size(); i++)
 	{
@@ -150,7 +150,7 @@ SEXP get_FEM_Matrix_skeleton(SEXP Rmesh, EOExpr<A> oper)
 	SpMat AMat;
 	Assembler::operKernel(oper, mesh, fe, AMat);
 
-	//Copy result in R memory     
+	//Copy result in R memory
 	SEXP result;
 	result = PROTECT(Rf_allocVector(VECSXP, 2));
 	SET_VECTOR_ELT(result, 0, Rf_allocMatrix(INTSXP, AMat.nonZeros() , 2));
@@ -163,7 +163,7 @@ SEXP get_FEM_Matrix_skeleton(SEXP Rmesh, EOExpr<A> oper)
 		{
 			for (SpMat::InnerIterator it(AMat,k); it; ++it)
 			{
-				//std::cout << "(" << it.row() <<","<< it.col() <<","<< it.value() <<")\n"; 
+				//std::cout << "(" << it.row() <<","<< it.col() <<","<< it.value() <<")\n";
 				rans[i] = 1+it.row();
 				rans[i + AMat.nonZeros()] = 1+it.col();
 				rans2[i] = it.value();
@@ -189,19 +189,19 @@ extern "C" {
 	\param RBCIndices an R-integer containing the indexes of the nodes the user want to apply a Dirichlet Condition,
 			the other are automatically considered in Neumann Condition.
 	\param RBCValues an R-double containing the value to impose for the Dirichlet condition, on the indexes specified in RBCIndices
-	\param DOF an R boolean indicating whether dofs of the model have to be computed or not
-	\param RGCVmethod an R-integer indicating the method to use to compute the dofs when DOF is TRUE, can be either 1 (exact) or 2 (stochastic)
+	\param GCV an R boolean indicating whether dofs of the model have to be computed or not
+	\param RGCVmethod an R-integer indicating the method to use to compute the dofs when GCV is TRUE, can be either 1 (exact) or 2 (stochastic)
 	\param Rnrealizations the number of random points used in the stochastic computation of the dofs
 	\return R-vector containg the coefficients of the solution
 */
 
 SEXP regression_Laplace(SEXP Rlocations, SEXP Robservations, SEXP Rmesh, SEXP Rorder,SEXP Rmydim, SEXP Rndim,
 					SEXP Rlambda, SEXP Rcovariates, SEXP RincidenceMatrix, SEXP RBCIndices, SEXP RBCValues,
-					SEXP DOF, SEXP RGCVmethod, SEXP Rnrealizations)
+					SEXP GCV, SEXP RGCVmethod, SEXP Rnrealizations, SEXP DOF, SEXP RDOF_matrix)
 {
     //Set input data
-	RegressionData regressionData(Rlocations, Robservations, Rorder, Rlambda, Rcovariates, RincidenceMatrix, RBCIndices, RBCValues, DOF, RGCVmethod, Rnrealizations);
-	
+	RegressionData regressionData(Rlocations, Robservations, Rorder, Rlambda, Rcovariates, RincidenceMatrix, RBCIndices, RBCValues, GCV, RGCVmethod, Rnrealizations, DOF, RDOF_matrix);
+
 	UInt mydim=INTEGER(Rmydim)[0];
 	UInt ndim=INTEGER(Rndim)[0];
 
@@ -233,18 +233,18 @@ SEXP regression_Laplace(SEXP Rlocations, SEXP Robservations, SEXP Rmesh, SEXP Ro
 	\param RBCIndices an R-integer containing the indexes of the nodes the user want to apply a Dirichlet Condition,
 			the other are automatically considered in Neumann Condition.
 	\param RBCValues an R-double containing the value to impose for the Dirichlet condition, on the indexes specified in RBCIndices
-	\param DOF an R boolean indicating whether dofs of the model have to be computed or not
-	\param RGCVmethod an R-integer indicating the method to use to compute the dofs when DOF is TRUE, can be either 1 (exact) or 2 (stochastic)
+	\param GCV an R boolean indicating whether dofs of the model have to be computed or not
+	\param RGCVmethod an R-integer indicating the method to use to compute the dofs when GCV is TRUE, can be either 1 (exact) or 2 (stochastic)
 	\param Rnrealizations the number of random points used in the stochastic computation of the dofs
 	\return R-vector containg the coefficients of the solution
 */
 
 SEXP regression_PDE(SEXP Rlocations, SEXP Robservations, SEXP Rmesh, SEXP Rorder,SEXP Rmydim, SEXP Rndim,
 					SEXP Rlambda, SEXP RK, SEXP Rbeta, SEXP Rc, SEXP Rcovariates, SEXP RincidenceMatrix,
-					SEXP RBCIndices, SEXP RBCValues, SEXP DOF, SEXP RGCVmethod, SEXP Rnrealizations)
+					SEXP RBCIndices, SEXP RBCValues, SEXP GCV, SEXP RGCVmethod, SEXP Rnrealizations, SEXP DOF, SEXP RDOF_matrix)
 {
-	RegressionDataElliptic regressionData(Rlocations, Robservations, Rorder, Rlambda, RK, Rbeta, Rc, Rcovariates, RincidenceMatrix, RBCIndices, RBCValues, DOF, RGCVmethod, Rnrealizations);
-	
+	RegressionDataElliptic regressionData(Rlocations, Robservations, Rorder, Rlambda, RK, Rbeta, Rc, Rcovariates, RincidenceMatrix, RBCIndices, RBCValues, GCV, RGCVmethod, Rnrealizations, DOF, RDOF_matrix);
+
 	UInt mydim=INTEGER(Rmydim)[0];
 	UInt ndim=INTEGER(Rndim)[0];
 
@@ -275,8 +275,8 @@ SEXP regression_PDE(SEXP Rlocations, SEXP Robservations, SEXP Rmesh, SEXP Rorder
 	\param RBCIndices an R-integer containing the indexes of the nodes the user want to apply a Dirichlet Condition,
 			the other are automatically considered in Neumann Condition.
 	\param RBCValues an R-double containing the value to impose for the Dirichlet condition, on the indexes specified in RBCIndices
-	\param DOF an R boolean indicating whether dofs of the model have to be computed or not
-	\param RGCVmethod an R-integer indicating the method to use to compute the dofs when DOF is TRUE, can be either 1 (exact) or 2 (stochastic)
+	\param GCV an R boolean indicating whether dofs of the model have to be computed or not
+	\param RGCVmethod an R-integer indicating the method to use to compute the dofs when GCV is TRUE, can be either 1 (exact) or 2 (stochastic)
 	\param Rnrealizations the number of random points used in the stochastic computation of the dofs
 	\return R-vector containg the coefficients of the solution
 */
@@ -284,11 +284,11 @@ SEXP regression_PDE(SEXP Rlocations, SEXP Robservations, SEXP Rmesh, SEXP Rorder
 
 SEXP regression_PDE_space_varying(SEXP Rlocations, SEXP Robservations, SEXP Rmesh, SEXP Rorder,SEXP Rmydim, SEXP Rndim,
 								SEXP Rlambda, SEXP RK, SEXP Rbeta, SEXP Rc, SEXP Ru, SEXP Rcovariates, SEXP RincidenceMatrix,
-								SEXP RBCIndices, SEXP RBCValues, SEXP DOF, SEXP RGCVmethod, SEXP Rnrealizations)
+								SEXP RBCIndices, SEXP RBCValues, SEXP GCV, SEXP RGCVmethod, SEXP Rnrealizations, SEXP DOF, SEXP RDOF_matrix)
 {
-    //Set data 
-	RegressionDataEllipticSpaceVarying regressionData(Rlocations, Robservations, Rorder, Rlambda, RK, Rbeta, Rc, Ru, Rcovariates, RincidenceMatrix, RBCIndices, RBCValues, DOF,  RGCVmethod, Rnrealizations);
-	
+    //Set data
+	RegressionDataEllipticSpaceVarying regressionData(Rlocations, Robservations, Rorder, Rlambda, RK, Rbeta, Rc, Ru, Rcovariates, RincidenceMatrix, RBCIndices, RBCValues, GCV,  RGCVmethod, Rnrealizations, DOF, RDOF_matrix);
+
 	UInt mydim=INTEGER(Rmydim)[0];
 	UInt ndim=INTEGER(Rndim)[0];
 
@@ -304,14 +304,14 @@ SEXP regression_PDE_space_varying(SEXP Rlocations, SEXP Robservations, SEXP Rmes
 }
 
 //! A function required for anysotropic and nonstationary regression (only 2D)
-/*! 
+/*!
     \return points where the PDE space-varying params are evaluated in the R code
 */
 SEXP get_integration_points(SEXP Rmesh, SEXP Rorder, SEXP Rmydim, SEXP Rndim)
 {
 	//Declare pointer to access data from C++
 	int order = INTEGER(Rorder)[0];
-	
+
 	//Get mydim and ndim
 	UInt mydim=INTEGER(Rmydim)[0];
 	UInt ndim=INTEGER(Rndim)[0];
@@ -328,11 +328,11 @@ SEXP get_integration_points(SEXP Rmesh, SEXP Rorder, SEXP Rmydim, SEXP Rndim)
 SEXP get_FEM_mass_matrix(SEXP Rmesh, SEXP Rorder, SEXP Rmydim, SEXP Rndim)
 {
 	int order = INTEGER(Rorder)[0];
-	
+
 	//Get mydim and ndim
 	UInt mydim=INTEGER(Rmydim)[0];
 	UInt ndim=INTEGER(Rndim)[0];
-	
+
 	typedef EOExpr<Mass> ETMass;   Mass EMass;   ETMass mass(EMass);
 
     if(order==1 && ndim==2)
@@ -346,11 +346,11 @@ SEXP get_FEM_mass_matrix(SEXP Rmesh, SEXP Rorder, SEXP Rmydim, SEXP Rndim)
 SEXP get_FEM_stiff_matrix(SEXP Rmesh, SEXP Rorder, SEXP Rmydim, SEXP Rndim)
 {
 	int order = INTEGER(Rorder)[0];
-	
+
 	//Get mydim and ndim
 	UInt mydim=INTEGER(Rmydim)[0];
 	UInt ndim=INTEGER(Rndim)[0];
-	
+
 	typedef EOExpr<Stiff> ETMass;   Stiff EStiff;   ETMass stiff(EStiff);
 
     if(order==1 && ndim==2)
@@ -362,10 +362,10 @@ SEXP get_FEM_stiff_matrix(SEXP Rmesh, SEXP Rorder, SEXP Rmydim, SEXP Rndim)
 
 //! A utility, not used for system solution, may be used for debugging
 SEXP get_FEM_PDE_matrix(SEXP Rlocations, SEXP Robservations, SEXP Rmesh, SEXP Rorder,SEXP Rmydim, SEXP Rndim, SEXP Rlambda, SEXP RK, SEXP Rbeta, SEXP Rc,
-				   SEXP Rcovariates, SEXP RincidenceMatrix, SEXP RBCIndices, SEXP RBCValues, SEXP DOF,SEXP RGCVmethod, SEXP Rnrealizations)
+				   SEXP Rcovariates, SEXP RincidenceMatrix, SEXP RBCIndices, SEXP RBCValues, SEXP GCV,SEXP RGCVmethod, SEXP Rnrealizations, SEXP DOF, SEXP RDOF_matrix)
 {
-	RegressionDataElliptic regressionData(Rlocations, Robservations, Rorder, Rlambda, RK, Rbeta, Rc, Rcovariates, RincidenceMatrix, RBCIndices, RBCValues, DOF, RGCVmethod, Rnrealizations);
-	
+	RegressionDataElliptic regressionData(Rlocations, Robservations, Rorder, Rlambda, RK, Rbeta, Rc, Rcovariates, RincidenceMatrix, RBCIndices, RBCValues, GCV, RGCVmethod, Rnrealizations, DOF, RDOF_matrix);
+
 	//Get mydim and ndim
 	UInt mydim=INTEGER(Rmydim)[0];
 	UInt ndim=INTEGER(Rndim)[0];
@@ -387,10 +387,10 @@ SEXP get_FEM_PDE_matrix(SEXP Rlocations, SEXP Robservations, SEXP Rmesh, SEXP Ro
 
 //! A utility, not used for system solution, may be used for debugging
 SEXP get_FEM_PDE_space_varying_matrix(SEXP Rlocations, SEXP Robservations, SEXP Rmesh, SEXP Rorder, SEXP Rmydim, SEXP Rndim, SEXP Rlambda, SEXP RK, SEXP Rbeta, SEXP Rc, SEXP Ru,
-		   SEXP Rcovariates, SEXP RincidenceMatrix, SEXP RBCIndices, SEXP RBCValues, SEXP DOF,SEXP RGCVmethod, SEXP Rnrealizations)
+		   SEXP Rcovariates, SEXP RincidenceMatrix, SEXP RBCIndices, SEXP RBCValues, SEXP GCV,SEXP RGCVmethod, SEXP Rnrealizations, SEXP DOF, SEXP RDOF_matrix)
 {
-	RegressionDataEllipticSpaceVarying regressionData(Rlocations, Robservations, Rorder, Rlambda, RK, Rbeta, Rc, Ru, Rcovariates, RincidenceMatrix, RBCIndices, RBCValues, DOF, RGCVmethod, Rnrealizations);
-	
+	RegressionDataEllipticSpaceVarying regressionData(Rlocations, Robservations, Rorder, Rlambda, RK, Rbeta, Rc, Ru, Rcovariates, RincidenceMatrix, RBCIndices, RBCValues, GCV, RGCVmethod, Rnrealizations, DOF, RDOF_matrix);
+
 	//Get mydim and ndim
 	//UInt mydim=INTEGER(Rmydim)[0];
 	UInt ndim=INTEGER(Rndim)[0];
@@ -425,22 +425,22 @@ SEXP get_FEM_PDE_space_varying_matrix(SEXP Rlocations, SEXP Robservations, SEXP 
 	\param Rlambda an R-double containing the penalization term of the empirical evidence respect to the prior one.
 	\param RnPC an R-integer specifying the number of principal components to compute.
 	\param Rvalidation an R-string containing the method to use for the cross-validation of the penalization term lambda.
-	\param RnFolds an R-integer specifying the number of folds to use if K-Fold cross validation method is chosen.		
-	\param RGCVmethod an R-integer specifying if the GCV computation has to be exact(if = 1) or stochastic (if = 2).		
+	\param RnFolds an R-integer specifying the number of folds to use if K-Fold cross validation method is chosen.
+	\param RGCVmethod an R-integer specifying if the GCV computation has to be exact(if = 1) or stochastic (if = 2).
 	\param Rnrealizations an R-integer specifying the number of realizations to use when computing the GCV stochastically.
-	
+
 	\return R-vector containg the coefficients of the solution
 */
 SEXP Smooth_FPCA(SEXP Rlocations, SEXP Rdatamatrix, SEXP Rmesh, SEXP Rorder, SEXP RincidenceMatrix, SEXP Rmydim, SEXP Rndim, SEXP Rlambda, SEXP RnPC, SEXP Rvalidation, SEXP RnFolds, SEXP RGCVmethod, SEXP Rnrealizations){
-//Set data   
-             
+//Set data
+
 	FPCAData fPCAdata(Rlocations, Rdatamatrix, Rorder, RincidenceMatrix, Rlambda, RnPC, RnFolds, RGCVmethod, Rnrealizations);
-   
-	UInt mydim=INTEGER(Rmydim)[0]; 
-	UInt ndim=INTEGER(Rndim)[0]; 
+
+	UInt mydim=INTEGER(Rmydim)[0];
+	UInt ndim=INTEGER(Rndim)[0];
 
 	std::string validation=CHAR(STRING_ELT(Rvalidation,0));
-	
+
 	if(fPCAdata.getOrder() == 1 && mydim==2 && ndim==2)
 		return(FPCA_skeleton<IntegratorTriangleP2, 1, 2, 2>(fPCAdata, Rmesh, validation));
 	else if(fPCAdata.getOrder() == 2 && mydim==2 && ndim==2)
@@ -452,6 +452,6 @@ SEXP Smooth_FPCA(SEXP Rlocations, SEXP Rdatamatrix, SEXP Rmesh, SEXP Rorder, SEX
 	else if(fPCAdata.getOrder() == 1 && mydim==3 && ndim==3)
 		return(FPCA_skeleton<IntegratorTetrahedronP2, 1, 3, 3>(fPCAdata, Rmesh, validation));
 	return(NILSXP);
-	 }      
+	 }
 
 }

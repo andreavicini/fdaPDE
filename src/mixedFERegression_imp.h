@@ -606,12 +606,12 @@ void MixedFERegressionBase<InputHandler,Integrator,ORDER, mydim, ndim>::apply(EO
 
 	}
 
-	this->_solution.resize(regressionData_.getLambda().size());
-	this->_dof.resize(regressionData_.getLambda().size());
+	this->_solution.resize(regressionData_.getLambdaS().size());
+	this->_dof.resize(regressionData_.getLambdaS().size());
 
-	for(UInt i = 0; i<regressionData_.getLambda().size(); ++i)
+	for(UInt i = 0; i<regressionData_.getLambdaS().size(); ++i)
 	{
-		Real lambda = regressionData_.getLambda()[i];
+		Real lambda = regressionData_.getLambdaS()[i];
 		SpMat R1_lambda = (-lambda)*R1_;
 		SpMat R0_lambda = (-lambda)*R0_;
 

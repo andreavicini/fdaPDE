@@ -77,7 +77,7 @@ CPP_smooth.manifold.FEM.basis<-function(locations, observations, FEMbasis, lambd
 
   ## Call C++ function
   bigsol <- .Call("regression_Laplace", locations, data, FEMbasis$mesh, FEMbasis$mesh$order, mydim, ndim, lambda, covariates,
-                  incidence_matrix, BC$BC_indices, BC$BC_values, GCV, GCVMETHOD, nrealizations, PACKAGE = "fdaPDE")
+                  incidence_matrix, BC$BC_indices, BC$BC_values, GCV, GCVMETHOD, nrealizations, DOF, DOF_matrix, PACKAGE = "fdaPDE")
 
   return(bigsol)
 }
