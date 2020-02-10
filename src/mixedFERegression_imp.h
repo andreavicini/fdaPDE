@@ -51,14 +51,14 @@ void MixedFERegressionBase<InputHandler, IntegratorSpace, ORDER, IntegratorTime,
 
 	for(UInt id:observations_na)
 	{
-		for(UInt j=0; j<B_.cols(); ++j)
+		for(UInt j=0; j<psi_.cols(); ++j)
 		{
-			if(B_.coeff(id,j)!=0)
-				B_.coeffRef(id,j) = 0;
+			if(psi_.coeff(id,j)!=0))
+				psi_.coeffRef(id,j) = 0;
 		}
 	}
-	B_.pruned();
-	B_.makeCompressed();
+	psi_.pruned();
+	psi_.makeCompressed();
 }
 
 template<typename InputHandler, typename IntegratorSpace, UInt ORDER, typename IntegratorTime, UInt SPLINE_DEGREE, UInt ORDER_DERIVATIVE, UInt mydim, UInt ndim>
@@ -326,7 +326,7 @@ void MixedFERegressionBase<InputHandler,IntegratorSpace,ORDER, IntegratorTime, S
 
 	if (regressionData_.getCovariates().rows() == 0) //no covariate
 	{
-		if (regressionData_.isLocationsByNodes() && (!regressionData_.isSpaceTime() || regressionData_.getFlagParabolic()))
+		if (regressionData_.isLocationsByNodes())
 		{
 			for (auto i=0; i<nlocations;++i)
 			{
@@ -474,11 +474,10 @@ void MixedFERegressionBase<InputHandler,IntegratorSpace,ORDER, IntegratorTime, S
 
 		if (isRcomputed_ == false ){
 			isRcomputed_ = true;
-			Eigen::SparseLU<SpMat> solver;
-			R0dec_=solver.compute(R0_);
+			R0dec_.compute(R0_);
 			if(!regressionData_.isSpaceTime() || !regressionData_.getFlagParabolic())
 			{
-				auto X2 = solver.solve(R1_);
+				auto X2 = R0dec_.solve(R1_);
 				R_ = R1_.transpose() * X2;
 			}
 		}
@@ -625,12 +624,10 @@ void MixedFERegressionBase<InputHandler,IntegratorSpace,ORDER, IntegratorTime, S
 
 	}
 
-	UInt NlambdaS = regressionData_.getLambdaS().size();
-
 	VectorXr rightHandData;
 	getRightHandData(rightHandData); //updated
-	_rightHandSide = VectorXr::Zero(2*nnodes);
-	_rightHandSide.topRows(nnodes)=rightHandData;
+	this->_rightHandSide = VectorXr::Zero(2*nnodes);
+	this->_rightHandSide.topRows(nnodes)=rightHandData;
 
 	_solution.resize(NlambdaS,1);
 	_dof.resize(NlambdaS,1);
@@ -644,7 +641,7 @@ void MixedFERegressionBase<InputHandler,IntegratorSpace,ORDER, IntegratorTime, S
 		buildMatrixNoCov(psi_, R1_lambda, R0_lambda);
 		//this->buildCoeffMatrix(DMat_, R1_lambda, R0_lambda);
 
-		if(isSpaceVarying)
+		if(this->isSpaceVarying)
 		{
 		    _rightHandSide.bottomRows(nnodes)=lambda*forcingTerm_;
 		}
