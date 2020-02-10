@@ -95,8 +95,10 @@ RegressionData::RegressionData(SEXP Rlocations, SEXP Robservations, SEXP Rorder,
 
 	bc_values_.assign(REAL(RBCValues),REAL(RBCValues) + Rf_length(RBCIndices));
 
-    UInt length_lambda = Rf_length(RlambdaS);
-    for (UInt i = 0; i<length_lambda; ++i)  lambdaS_.push_back(REAL(RlambdaS)[i]);
+  UInt length_lambda = Rf_length(RlambdaS);
+  for (UInt i = 0; i<length_lambda; ++i)  lambdaS_.push_back(REAL(RlambdaS)[i]);
+
+	lambdaT_.push_back(0);
 }
 
 RegressionData::RegressionData(SEXP Rlocations, SEXP Rtime_locations, SEXP Robservations, SEXP Rorder, SEXP RlambdaS, SEXP RlambdaT, SEXP Rcovariates,
