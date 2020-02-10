@@ -44,7 +44,7 @@ void MixedFERegressionBase<InputHandler,IntegratorSpace,ORDER, IntegratorTime, S
 }
 
 template<typename InputHandler, typename IntegratorSpace, UInt ORDER, typename IntegratorTime, UInt SPLINE_DEGREE, UInt ORDER_DERIVATIVE, UInt mydim, UInt ndim>
-void MixedFERegressionBase<InputHandler, IntegratorSpace, ORDER, IntegratorTime, SPLINE_DEGREE, ORDER_DERIVATIVE, mydim, ndim>::addNA()
+void MixedFERegressionBase<InputHandler,IntegratorSpace,ORDER, IntegratorTime, SPLINE_DEGREE, ORDER_DERIVATIVE, mydim, ndim>::addNA()
 {
 
 	const std::vector<UInt>& observations_na= regressionData_.getObservationsNA();
@@ -53,8 +53,8 @@ void MixedFERegressionBase<InputHandler, IntegratorSpace, ORDER, IntegratorTime,
 	{
 		for(UInt j=0; j<psi_.cols(); ++j)
 		{
-			if(psi_.coeff(id,j)!=0))
-				psi_.coeffRef(id,j) = 0;
+			if(psi_.coeff(id,j)!=0)
+				psi_.coeffRef(id, j) = 0;
 		}
 	}
 	psi_.pruned();
@@ -150,7 +150,6 @@ void MixedFERegressionBase<InputHandler,IntegratorSpace,ORDER, IntegratorTime, S
 		psi_.makeCompressed();
 	}
 }
-
 template<typename InputHandler, typename IntegratorSpace, UInt ORDER, typename IntegratorTime, UInt SPLINE_DEGREE, UInt ORDER_DERIVATIVE, UInt mydim, UInt ndim>
 MatrixXr MixedFERegressionBase<InputHandler,IntegratorSpace,ORDER, IntegratorTime, SPLINE_DEGREE, ORDER_DERIVATIVE, mydim, ndim>::LeftMultiplybyQ(const MatrixXr& u)
 {
@@ -170,19 +169,10 @@ MatrixXr MixedFERegressionBase<InputHandler,IntegratorSpace,ORDER, IntegratorTim
 }
 
 template<typename InputHandler, typename IntegratorSpace, UInt ORDER, typename IntegratorTime, UInt SPLINE_DEGREE, UInt ORDER_DERIVATIVE, UInt mydim, UInt ndim>
-void MixedFERegressionBase<InputHandler,IntegratorSpace,ORDER, IntegratorTime, SPLINE_DEGREE, ORDER_DERIVATIVE, mydim, ndim>::buildMatrixNoCov(const SpMat& Psi,  const SpMat& R1,  const SpMat& R0) {
+void MixedFERegressionBase<InputHandler,IntegratorSpace,ORDER, IntegratorTime, SPLINE_DEGREE, ORDER_DERIVATIVE, mydim, ndim>::buildMatrixNoCov(const SpMat& DMat,  const SpMat& R1,  const SpMat& R0)
+{
 
 	UInt nnodes = N_*M_;
-
-	SpMat DMat=Psi;
-
-	if(!regressionData_.isSpaceTime())
-	{
-		if(regressionData_.getNumberOfRegions()==0) // pointwise data
-		    DMat=Psi.transpose()*Psi;
-		else                                        // areal data: need to add the diag(|D_1|,...,|D_N|)
-		    DMat=Psi.transpose()*A_.asDiagonal()*Psi;
-	}
 
 	std::vector<coeff> tripletAll;
 	tripletAll.reserve(DMat.nonZeros() + 2*R1.nonZeros() + R0.nonZeros());
@@ -277,7 +267,8 @@ void MixedFERegressionBase<InputHandler,IntegratorSpace,ORDER, IntegratorTime, S
 
 template<typename InputHandler, typename IntegratorSpace, UInt ORDER, typename IntegratorTime, UInt SPLINE_DEGREE, UInt ORDER_DERIVATIVE, UInt mydim, UInt ndim>
 template<typename Derived>
-MatrixXr MixedFERegressionBase<InputHandler,IntegratorSpace,ORDER, IntegratorTime, SPLINE_DEGREE, ORDER_DERIVATIVE, mydim, ndim>::system_solve(const Eigen::MatrixBase<Derived> &b) {
+MatrixXr MixedFERegressionBase<InputHandler,IntegratorSpace,ORDER, IntegratorTime, SPLINE_DEGREE, ORDER_DERIVATIVE, mydim, ndim>::system_solve(const Eigen::MatrixBase<Derived> &b)
+{
 
 	// Resolution of the system matrixNoCov * x1 = b
 	MatrixXr x1 = matrixNoCovdec_.solve(b);
@@ -299,7 +290,7 @@ template<typename InputHandler, typename IntegratorSpace, UInt ORDER, typename I
 void MixedFERegressionBase<InputHandler,IntegratorSpace,ORDER, IntegratorTime, SPLINE_DEGREE, ORDER_DERIVATIVE, mydim, ndim>::setA()
 {
 	UInt nRegions = regressionData_.getNumberOfRegions();
-	int m = regressionData_.isSpaceTime() ? regressionData_.getNumberofTimeObservations():1;
+	UInt m = regressionData_.isSpaceTime() ? regressionData_.getNumberofTimeObservations():1
 	A_=VectorXr::Zero(m*nRegions);
 	for (int i=0; i<nRegions; i++)
 	{
@@ -354,7 +345,7 @@ void MixedFERegressionBase<InputHandler,IntegratorSpace,ORDER, IntegratorTime, S
 }
 
 template<typename InputHandler, typename IntegratorSpace, UInt ORDER, typename IntegratorTime, UInt SPLINE_DEGREE, UInt ORDER_DERIVATIVE, UInt mydim, UInt ndim>
-void MixedFERegressionBase<InputHandler,IntegratorSpace,ORDER, IntegratorTime, SPLINE_DEGREE, ORDER_DERIVATIVE, mydim, ndim>::computeDegreesOfFreedom(UInt output_index, Real lambda)
+void MixedFERegressionBase<InputHandler,IntegratorSpace,ORDER, IntegratorTime, SPLINE_DEGREE, ORDER_DERIVATIVE, mydim, ndim>::computeDegreesOfFreedom(UInt output_indexS, UInt output_indexT, Real lambdaS, Real lambdaT)
 {
 	int GCVmethod = regressionData_.getGCVmethod();
 	switch (GCVmethod) {
@@ -368,10 +359,10 @@ void MixedFERegressionBase<InputHandler,IntegratorSpace,ORDER, IntegratorTime, S
 }
 
 template<typename InputHandler, typename IntegratorSpace, UInt ORDER, typename IntegratorTime, UInt SPLINE_DEGREE, UInt ORDER_DERIVATIVE, UInt mydim, UInt ndim>
-void MixedFERegressionBase<InputHandler,IntegratorSpace,ORDER, IntegratorTime, SPLINE_DEGREE, ORDER_DERIVATIVE, mydim, ndim>::computeDegreesOfFreedomExact(UInt output_index, Real lambda)
+void MixedFERegressionBase<InputHandler,IntegratorSpace,ORDER, IntegratorTime, SPLINE_DEGREE, ORDER_DERIVATIVE, mydim, ndim>::computeDegreesOfFreedomExact(UInt output_indexS, UInt output_indexT, Real lambdaS, Real lambdaT)
 {
 
-	UInt nnodes = N_*M_;
+	UInt nnodes =N_*M_;
 	UInt nlocations = regressionData_.getNumberofObservations();
 	Real degrees=0;
 
@@ -472,7 +463,8 @@ void MixedFERegressionBase<InputHandler,IntegratorSpace,ORDER, IntegratorTime, S
 			X1 = psi_.transpose() * A_.asDiagonal() * LeftMultiplybyQ(psi_);
 		}
 
-		if (isRcomputed_ == false ){
+		if (isRcomputed_ == false)
+		{
 			isRcomputed_ = true;
 			R0dec_.compute(R0_);
 			if(!regressionData_.isSpaceTime() || !regressionData_.getFlagParabolic())
@@ -481,13 +473,31 @@ void MixedFERegressionBase<InputHandler,IntegratorSpace,ORDER, IntegratorTime, S
 				R_ = R1_.transpose() * X2;
 			}
 		}
+		MatrixXr P;
+		if (regressionData_.isSpaceTime())
+		{
+			if(regressionData_.getFlagParabolic())
+			{
+				SpMat X2 = R1_+lambdaT*LR0k_;
+				P=lambdaS*X2.transpose()*R0dec_.solve(X2);
+			}
+			else
+			{
+				P=lambdaS*R_+lambdaT*Ptk_;
+			}
+		}
+		else
+		{
+			P=lambdaS*R_;
+		}
 
-		MatrixXr X3 = X1 + lambda * R_;
+
+		MatrixXr X3 = X1 + P;
 		Eigen::LDLT<MatrixXr> Dsolver(X3);
 
 		auto k = regressionData_.getObservationsIndices();
 
-		if(regressionData_.isLocationsByNodes() && regressionData_.getCovariates().rows() != 0) {
+		if(!regressionData_.isSpaceTime() && regressionData_.isLocationsByNodes() && regressionData_.getCovariates().rows() != 0) {
 			degrees += regressionData_.getCovariates().cols();
 
 			// Setup rhs B
@@ -511,7 +521,8 @@ void MixedFERegressionBase<InputHandler,IntegratorSpace,ORDER, IntegratorTime, S
 			}
 		}
 
-		if (!regressionData_.isLocationsByNodes()){
+		if (regressionData_.isSpaceTime() || !regressionData_.isLocationsByNodes())
+		{
 			MatrixXr X;
 			X = Dsolver.solve(MatrixXr(X1));
 
@@ -523,11 +534,11 @@ void MixedFERegressionBase<InputHandler,IntegratorSpace,ORDER, IntegratorTime, S
 			}
 		}
 	}
-	_dof(output_index) = degrees;
+	_dof(output_indexS,output_indexT) = degrees;
 }
 
 template<typename InputHandler, typename IntegratorSpace, UInt ORDER, typename IntegratorTime, UInt SPLINE_DEGREE, UInt ORDER_DERIVATIVE, UInt mydim, UInt ndim>
-void MixedFERegressionBase<InputHandler,IntegratorSpace,ORDER, IntegratorTime, SPLINE_DEGREE, ORDER_DERIVATIVE, mydim, ndim>::computeDegreesOfFreedomStochastic(UInt output_index, Real lambda)
+void MixedFERegressionBase<InputHandler,IntegratorSpace,ORDER, IntegratorTime, SPLINE_DEGREE, ORDER_DERIVATIVE, mydim, ndim>::computeDegreesOfFreedomStochastic(UInt output_indexS, UInt output_indexT, Real lambdaS, Real lambdaT)
 {
 
 	UInt nnodes = N_*M_;
@@ -600,7 +611,79 @@ void MixedFERegressionBase<InputHandler,IntegratorSpace,ORDER, IntegratorTime, S
 
 	// Estimates: sample mean, sample variance
 	Real mean = edf_vect.sum()/nrealizations;
-	_dof(output_index) = mean;
+	_dof(output_indexS,output_indexT) = mean;
+}
+
+template<typename InputHandler, typename IntegratorSpace, UInt ORDER, typename IntegratorTime, UInt SPLINE_DEGREE, UInt ORDER_DERIVATIVE, UInt mydim, UInt ndim>
+void SpaceTimeRegression<InputHandler, IntegratorSpace, ORDER, IntegratorTime, SPLINE_DEGREE, ORDER_DERIVATIVE, mydim, ndim>::buildSpaceTimeMatrices()
+{
+
+	MixedSplineRegression <InputHandler, IntegratorTime, SPLINE_DEGREE, ORDER_DERIVATIVE> Spline(mesh_time_,regressionData_);
+	MixedFDRegression <InputHandler> FiniteDifference(mesh_time_,regressionData_);
+
+	SpMat IM(M_,M_);
+	SpMat phi;
+
+	if(regressionData_.getFlagParabolic()) // Parabolic case
+	{
+		FiniteDifference.setDerOperator();
+		SpMat L = FiniteDifference.getDerOpL(); // Matrix of finite differences
+		IM.setIdentity();
+		LR0k_ = kroneckerProduct(L,R0_);
+		Ptk_.resize(N_*M_,N_*M_); // not needed for parabolic case
+		phi = IM;
+		//! right hand side correction for the initial condition:
+		rhs_ic_correction_ = (1/(mesh_time_[1]-mesh_time_[0]))*(R0_*regressionData_.getInitialValues());
+	}
+	else	// Separable case
+	{
+		SpMat IN(N_,N_);
+		Spline.setPhi();
+		Spline.setTimeMass();
+		Spline.smoothSecondDerivative();
+		if(regressionData_.getFlagMass()) // Mass penalization
+		{
+			IM = Spline.getTimeMass();
+			IN = R0_;
+		}
+		else	// Identity penalization
+		{
+			IM.setIdentity();
+			IN.setIdentity();
+		}
+		phi = Spline.getPhi();
+		SpMat Pt = Spline.getPt();
+		Ptk_ = kroneckerProduct(Pt,IN);
+		LR0k_.resize(N_*M_,N_*M_); // not needed for parabolic case
+	}
+	// Make the Kronecker product to tensorize the system
+	SpMat psi_temp =  psi_;
+	SpMat R1_temp = R1_;
+	SpMat R0_temp = R0_;
+	psi_.resize(N_*M_,N_*M_);
+	psi_ = kroneckerProduct(phi,psi_temp);
+	addNA();
+	R1_.resize(N_*M_,N_*M_);
+	R1_ = kroneckerProduct(IM,R1_temp);
+	R1_.makeCompressed();
+	R0_.resize(N_*M_,N_*M_);
+	R0_ = kroneckerProduct(IM,R0_temp);
+	R0_.makeCompressed();
+
+	//! right hand side correction for the forcing term:
+	rhs_ft_correction_.resize(M_*N_);
+
+	if(this->isSpaceVarying)
+	{
+		VectorXr ft = RegressionSpace.getForcingTerm();
+		for(UInt i=0; i<N_; i++)
+		{
+			for(UInt j=0; j<M_; j++)
+			{
+				rhs_ft_correction_(i+j*N_) = ft(i);
+			}
+		}
+	}
 }
 
 template<typename InputHandler, typename IntegratorSpace, UInt ORDER, typename IntegratorTime, UInt SPLINE_DEGREE, UInt ORDER_DERIVATIVE, UInt mydim, UInt ndim>
@@ -608,7 +691,7 @@ template<typename A>
 void MixedFERegressionBase<InputHandler,IntegratorSpace,ORDER, IntegratorTime, SPLINE_DEGREE, ORDER_DERIVATIVE, mydim, ndim>::apply(EOExpr<A> oper, const ForcingTerm & u)
 {
 	UInt nnodes = N_*M_;
-	FiniteElement<IntegratorSpace, ORDER, mydim, ndim> fe;
+	FiniteElement<Integrator, ORDER, mydim, ndim> fe;
 
 	setA();
 	setPsi();
@@ -616,51 +699,99 @@ void MixedFERegressionBase<InputHandler,IntegratorSpace,ORDER, IntegratorTime, S
 	typedef EOExpr<Mass> ETMass; Mass EMass; ETMass mass(EMass);
 	Assembler::operKernel(oper, mesh_, fe, R1_);
 	Assembler::operKernel(mass, mesh_, fe, R0_);
-
-	if(this->isSpaceVarying)
-	{
-				//u=ForcingTerm(VectorXr::Zero(nnodes));
-		Assembler::forcingTerm(mesh_, fe, u, forcingTerm_);
-
-	}
-
 	VectorXr rightHandData;
 	getRightHandData(rightHandData); //updated
 	this->_rightHandSide = VectorXr::Zero(2*nnodes);
 	this->_rightHandSide.topRows(nnodes)=rightHandData;
 
-	_solution.resize(NlambdaS,1);
-	_dof.resize(NlambdaS,1);
+	VectorXr forcingTerm;
 
-	for(UInt i = 0; i<NlambdaS; ++i)
+	if(this->isSpaceVarying)
 	{
-		Real lambda = regressionData_.getLambdaS()[i];
-		SpMat R1_lambda = (-lambda)*R1_;
-		SpMat R0_lambda = (-lambda)*R0_;
+        //u=ForcingTerm(VectorXr::Zero(nnodes));
+		Assembler::forcingTerm(mesh_, fe, u, forcingTerm);
 
-		buildMatrixNoCov(psi_, R1_lambda, R0_lambda);
-		//this->buildCoeffMatrix(DMat_, R1_lambda, R0_lambda);
+	}
 
-		if(this->isSpaceVarying)
+	if (regressionData_.isSpaceTime())
+	{
+		buildSpaceTimeMatrices();
+	}
+
+
+	this->_solution.resize(regressionData_.getLambdaS().size(),regressionData_.getLambdaT().size());
+	this->_dof.resize(regressionData_.getLambdaS().size(),regressionData_.getLambdaT().size());
+	this->_GCV.resize(regressionData_.getLambdaS().size(),regressionData_.getLambdaT().size());
+	if(regressionData_.getCovariates().rows()!=0)
+	{
+		this->_beta.resize(regressionData_.getLambdaS().size(),regressionData_.getLambdaT().size());
+	}
+
+	VectorXr rhs= _rightHandSide;
+
+	for(UInt s = 0; s<regressionData_.getLambdaS().size(); ++s)
+	{
+		for(UInt t = 0; t<regressionData_.getLambdaT().size(); ++t)
 		{
-		    _rightHandSide.bottomRows(nnodes)=lambda*forcingTerm_;
+			_rightHandSide=rhs;
+			Real lambdaS = regressionData_.getLambdaS()[s];
+			Real lambdaT = regressionData_.getLambdaT()[t];
+			SpMat R0_lambda = (-lambdaS)*R0_; // build the SouthEast block of the matrix
+			SpMat R1_lambda = (-lambdaS)*R1_;
+			if(regressionData_.getFlagSpaceTime())
+				R1_lambda -= lambdaS*(lambdaT*LR0k_); // build the SouthWest block of the matrix (also the NorthEast block transposed)
+
+			SpMat NWblock;
+			if(regressionData_.getNumberOfRegions()==0) // pointwise data
+				NWblock=psi_.transpose()*psi_;
+			else                                        // areal data: need to add the diag(|D_1|,...,|D_N|)
+			  NWblock=psi_.transpose()*A_.asDiagonal()*psi_;
+
+			if(regressionData_.isSpaceTime() && !regressionData_.getFlagParabolic())
+				NWblock+=lambdaT*Ptk_;
+
+			this->buildMatrixNoCov(NWblock, R1_lambda, R0_lambda);
+
+			//! right-hand side correction for space varying PDEs
+			if(this->isSpaceVarying)
+			{
+			    _rightHandSide.bottomRows(nnodes)= (-lambdaS)*forcingTerm;
+			}
+
+			//! righ-hand side correction for initial condition in parabolic case
+			if(regressionData_.getFlagParabolic())
+			{
+				for(UInt i = 0; i<regressionData_.getInitialValues().rows(); i++)
+				{
+					_rightHandSide(nnodes+i) -= lambdaS*rhs_ic_correction_(i);
+				}
+			}
+			//Applying boundary conditions if necessary
+			if(regressionData_.getDirichletIndices().size() != 0)  // if areal data NO BOUNDARY CONDITIONS
+				addDirichletBC();
+			//factorization of the system for woodbury decomposition
+			system_factorize();
+
+			if(regressionData_.computeGCV())
+			{
+				if (regressionData_.computeDOF())
+					computeDegreesOfFreedom(s,t,lambdaS,lambdaT);
+				computeGeneralizedCrossValidation(s,t,lambdaS,lambdaT);
+			}
+			else
+			{
+				_dof(s,t) = -1;
+				_GCV(s,t) = -1;
+			}
+
+			// covariates computation
+			if(regressionData_.getCovariates().rows()!=0)
+			{
+				MatrixXr W(this->regressionData_.getCovariates());
+				VectorXr beta_rhs = W.transpose()*(regressionData_.getObservations() - psi_*_solution(s,t).topRows(psi_.cols()));
+				_beta(s,t) = WTW_.solve(beta_rhs);
+			}
 		}
-
-		//Applying boundary conditions if necessary
-		if(regressionData_.getDirichletIndices().size() != 0)  // if areal data NO BOUNDARY CONDITIONS
-			addDirichletBC();
-
-		system_factorize();
-
-	   _solution(i) = this->template system_solve(this->_rightHandSide);
-
-		if(regressionData_.computeDOF())
-		{
-			computeDegreesOfFreedom(i,lambda);
-		}
-
-		else
-			_dof(i) = -1;
 	}
 }
 
