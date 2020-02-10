@@ -47,15 +47,9 @@ class MixedFERegressionBase
 	MatrixXr R_; //! R1 ^T * R0^-1 * R1
 
 
-	SpMat Psk_; 	//! kron(IM,Ps) (separable version)
 	SpMat Ptk_; 	//! kron(Pt,IN) (separable version)
-	SpMat R1k_; 	//! kron(IM,R1)
 	SpMat LR0k_; 	//! kron(L,R0) (parabolic version)
-	SpMat R0k_;  	//! kron(IM,R0)
-	SpMat B_; 		//! kron(Phi,Psi)
-
-
-	SpMat A_; 		//! A_.asDiagonal() areal matrix
+	VectorXr A_; 		//! A_.asDiagonal() areal matrix
 
 
 	MatrixXr U_;	//! psi^T * W or psi^T * A * W padded with zeros, needed for Woodbury decomposition
@@ -66,7 +60,7 @@ class MixedFERegressionBase
 	Eigen::PartialPivLU<MatrixXr> WTW_;	// Stores the factorization of W^T * W
 	bool isWTWfactorized_ = false;
 	bool isRcomputed_ = false;
-	Eigen::SparseLU<SpMat> R_; //! Stores the factorization of R0k_
+	Eigen::SparseLU<SpMat> R0dec_; //! Stores the factorization of R0_
 
 
 	VectorXr rhs_ft_correction_;	//! right hand side correction for the forcing term:
@@ -90,22 +84,22 @@ class MixedFERegressionBase
 	MatrixXr LeftMultiplybyQ(const MatrixXr& u);
 	//! A function which adds Dirichlet boundary conditions before solving the system ( Remark: BC for areal data are not implemented!)
 	void addDirichletBC();
+	//! A method which takes care of missing values setting to 0 the corresponding rows of B_
+	void addNA();
  	//! A member function which builds the A vector containing the areas of the regions in case of areal data
 	void setA();
 	//! A member function returning the system right hand data
 	void getRightHandData(VectorXr& rightHandData);
-	//! A method which builds all the space matrices
-	void buildSpaceMatrices();
 	//! A method which builds all the matrices needed for assembling matrixNoCov_
-	void buildMatrices();
+	void buildSpaceTimeMatrices();
 	//! A method computing the dofs
-	void computeDegreesOfFreedom(UInt output_indexS, UInt output_indexT, Real lambdaS, Real lambdaT, const SpMat& NWblock);
+	void computeDegreesOfFreedom(UInt output_indexS, UInt output_indexT, Real lambdaS, Real lambdaT);
 	//! A method computing dofs in case of exact GCV, it is called by computeDegreesOfFreedom
-	void computeDegreesOfFreedomExact(UInt output_indexS, UInt output_indexT, Real lambdaS, Real lambdaT, const SpMat& NWblock);
+	void computeDegreesOfFreedomExact(UInt output_indexS, UInt output_indexT, Real lambdaS, Real lambdaT);
 	//! A method computing dofs in case of stochastic GCV, it is called by computeDegreesOfFreedom
-	void computeDegreesOfFreedomStochastic(UInt output_indexS, UInt output_indexT, Real lambdaS, Real lambdaT, const SpMat& NWblock);
+	void computeDegreesOfFreedomStochastic(UInt output_indexS, UInt output_indexT, Real lambdaS, Real lambdaT);
 	//! A method computing GCV from the dofs
-	void computeGeneralizedCrossValidation(UInt output_indexS, UInt output_indexT, Real lambdaS, Real lambdaT, const SpMat& NWblock);
+	void computeGeneralizedCrossValidation(UInt output_indexS, UInt output_indexT, Real lambdaS, Real lambdaT);
 
   //! A function to factorize the system, using Woodbury decomposition when there are covariates
 	void system_factorize();
@@ -126,9 +120,17 @@ class MixedFERegressionBase
 	void apply(EOExpr<A> oper,const ForcingTerm & u);
 
 	//! A inline member that returns a VectorXr, returns the whole solution_.
-	inline std::vector<VectorXr> const & getSolution() const{return _solution;};
+	inline MatrixXv const & getSolution() const{return _solution;}
 	//! A function returning the computed dofs of the model
-	inline std::vector<Real> const & getDOF() const{return _dof;};
+	inline MatrixXr const & getDOF() const{return _dof;}
+	//! A method returning the computed GCV of the model
+	inline MatrixXr const & getGCV() const{return _GCV;}
+	//! A method returning the computed beta coefficients of the model
+	inline MatrixXv const & getBeta() const{return _beta;}
+	//! A method returning the index of the best lambdaS according to GCV
+	inline UInt getBestLambdaS(){return bestLambdaS_;}
+	//! A method returning the index of the best lambdaT according to GCV
+	inline getBestLambdaT(){return bestLambdaT_;}
 };
 
 template<typename InputHandler, typename Integrator, UInt ORDER, UInt mydim, UInt ndim>
