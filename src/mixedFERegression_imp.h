@@ -787,24 +787,26 @@ void MixedFERegressionBase<InputHandler,IntegratorSpace,ORDER, IntegratorTime, S
 	}
 }
 
-template<typename InputHandler, typename IntegratorSpace, UInt ORDER, typename IntegratorTime, UInt SPLINE_DEGREE, UInt ORDER_DERIVATIVE, UInt mydim, UInt ndim>
-class MixedFERegression<RegressionData, IntegratorSpace, ORDER, IntegratorTime, SPLINE_DEGREE, ORDER_DERIVATIVE, mydim, ndim> : public MixedFERegressionBase<RegressionData, IntegratorSpace, ORDER, IntegratorTime, SPLINE_DEGREE, ORDER_DERIVATIVE, mydim, ndim>
+template<typename IntegratorSpace, UInt ORDER, typename IntegratorTime, UInt SPLINE_DEGREE, UInt ORDER_DERIVATIVE, UInt mydim, UInt ndim>
+class MixedFERegression<RegressionData,IntegratorSpace,ORDER, IntegratorTime, SPLINE_DEGREE, ORDER_DERIVATIVE, mydim, ndim> : public MixedFERegressionBase<RegressionData,IntegratorSpace,ORDER, IntegratorTime, SPLINE_DEGREE, ORDER_DERIVATIVE, mydim, ndim>
 {
 public:
-	MixedFERegression(const MeshHandler<ORDER, mydim, ndim>& mesh, const RegressionData& regressionData):MixedFERegressionBase<RegressionData, Integrator, ORDER, mydim, ndim>(mesh, regressionData){};
+	MixedFERegression(const MeshHandler<ORDER, mydim, ndim>& mesh, const RegressionData& regressionData):MixedFERegressionBase<RegressionData,IntegratorSpace,ORDER, IntegratorTime, SPLINE_DEGREE, ORDER_DERIVATIVE, mydim, ndim>(mesh, regressionData){};
+	MixedFERegression(const MeshHandler<ORDER, mydim, ndim>& mesh, const std::vector<Real>& mesh_time, const RegressionData& regressionData):MixedFERegressionBase<RegressionData,IntegratorSpace,ORDER, IntegratorTime, SPLINE_DEGREE, ORDER_DERIVATIVE, mydim, ndim>(mesh, mesh_time, regressionData){};
 
 	void apply()
 	{
 		typedef EOExpr<Stiff> ETStiff; Stiff EStiff; ETStiff stiff(EStiff);
-	    MixedFERegressionBase<RegressionData, Integrator, ORDER, mydim, ndim>::apply(stiff, ForcingTerm(std::vector<Real>(1)));
+	    MixedFERegressionBase<RegressionData,IntegratorSpace,ORDER, IntegratorTime, SPLINE_DEGREE, ORDER_DERIVATIVE, mydim, ndim>::apply(stiff, ForcingTerm(std::vector<Real>(1)));
 	}
 };
 
-template<typename InputHandler, typename IntegratorSpace, UInt ORDER, typename IntegratorTime, UInt SPLINE_DEGREE, UInt ORDER_DERIVATIVE, UInt mydim, UInt ndim>
-class MixedFERegression<RegressionDataElliptic, IntegratorSpace, ORDER, IntegratorTime, SPLINE_DEGREE, ORDER_DERIVATIVE, mydim, ndim>: public MixedFERegressionBase<RegressionDataElliptic, IntegratorSpace, ORDER, IntegratorTime, SPLINE_DEGREE, ORDER_DERIVATIVE, mydim, ndim>
+template<typename IntegratorSpace, UInt ORDER, typename IntegratorTime, UInt SPLINE_DEGREE, UInt ORDER_DERIVATIVE, UInt mydim, UInt ndim>
+class MixedFERegression<RegressionDataElliptic,IntegratorSpace,ORDER, IntegratorTime, SPLINE_DEGREE, ORDER_DERIVATIVE, mydim, ndim> : public MixedFERegressionBase<RegressionDataElliptic,IntegratorSpace,ORDER, IntegratorTime, SPLINE_DEGREE, ORDER_DERIVATIVE, mydim, ndim>
 {
 public:
-	MixedFERegression(const MeshHandler<ORDER, mydim, ndim>& mesh, const RegressionDataElliptic& regressionData):MixedFERegressionBase<RegressionDataElliptic, Integrator, ORDER, mydim, ndim>(mesh, regressionData){};
+	MixedFERegression(const MeshHandler<ORDER, mydim, ndim>& mesh, const RegressionDataElliptic& regressionData):MixedFERegressionBase<RegressionDataElliptic,IntegratorSpace,ORDER, IntegratorTime, SPLINE_DEGREE, ORDER_DERIVATIVE, mydim, ndim>(mesh, regressionData){};
+	MixedFERegression(const MeshHandler<ORDER, mydim, ndim>& mesh, const std::vector<Real>& mesh_time, const RegressionDataElliptic& regressionData):MixedFERegressionBase<RegressionDataElliptic,IntegratorSpace,ORDER, IntegratorTime, SPLINE_DEGREE, ORDER_DERIVATIVE, mydim, ndim>(mesh, mesh_time, regressionData){};
 
 	void apply()
 	{
@@ -825,16 +827,17 @@ public:
 	    const Eigen::Matrix<Real,2,2>& K = this->regressionData_.getK();
 	    const Eigen::Matrix<Real,2,1>& b = this->regressionData_.getBeta();
 
-	    MixedFERegressionBase<RegressionDataElliptic, Integrator, ORDER, mydim, ndim>::apply(c*mass+stiff[K]+dot(b,grad), ForcingTerm(std::vector<Real>(1)));
+	    MixedFERegressionBase<RegressionDataElliptic,IntegratorSpace,ORDER, IntegratorTime, SPLINE_DEGREE, ORDER_DERIVATIVE, mydim, ndim>::apply(c*mass+stiff[K]+dot(b,grad), ForcingTerm(std::vector<Real>(1)));
 	}
 	}
 };
 
-template<typename InputHandler, typename IntegratorSpace, UInt ORDER, typename IntegratorTime, UInt SPLINE_DEGREE, UInt ORDER_DERIVATIVE, UInt mydim, UInt ndim>
-class MixedFERegression<RegressionDataEllipticSpaceVarying, IntegratorSpace, ORDER, IntegratorTime, SPLINE_DEGREE, ORDER_DERIVATIVE, mydim, ndim> : public MixedFERegressionBase<RegressionDataEllipticSpaceVarying, IntegratorSpace, ORDER, IntegratorTime, SPLINE_DEGREE, ORDER_DERIVATIVE, mydim, ndim>
+template<typename IntegratorSpace, UInt ORDER, typename IntegratorTime, UInt SPLINE_DEGREE, UInt ORDER_DERIVATIVE, UInt mydim, UInt ndim>
+class MixedFERegression<RegressionDataEllipticSpaceVarying,IntegratorSpace,ORDER, IntegratorTime, SPLINE_DEGREE, ORDER_DERIVATIVE, mydim, ndim> : public MixedFERegressionBase<RegressionDataEllipticSpaceVarying,IntegratorSpace,ORDER, IntegratorTime, SPLINE_DEGREE, ORDER_DERIVATIVE, mydim, ndim>
 {
 public:
-	MixedFERegression(const MeshHandler<ORDER, mydim, ndim>& mesh, const RegressionDataEllipticSpaceVarying& regressionData):MixedFERegressionBase<RegressionDataEllipticSpaceVarying, Integrator, ORDER, mydim, ndim>(mesh, regressionData){};
+	MixedFERegression(const MeshHandler<ORDER, mydim, ndim>& mesh, const RegressionDataEllipticSpaceVarying& regressionData):MixedFERegressionBase<RegressionDataEllipticSpaceVarying,IntegratorSpace,ORDER, IntegratorTime, SPLINE_DEGREE, ORDER_DERIVATIVE, mydim, ndim>(mesh, regressionData){};
+	MixedFERegression(const MeshHandler<ORDER, mydim, ndim>& mesh, const std::vector<Real>& mesh_time, const RegressionDataEllipticSpaceVarying& regressionData):MixedFERegressionBase<RegressionDataEllipticSpaceVarying,IntegratorSpace,ORDER, IntegratorTime, SPLINE_DEGREE, ORDER_DERIVATIVE, mydim, ndim>(mesh, mesh_time, regressionData){};
 
 	void apply()
 	{
@@ -858,9 +861,88 @@ public:
 
 		this->isSpaceVarying=TRUE;
 
-		MixedFERegressionBase<RegressionDataEllipticSpaceVarying, Integrator, ORDER, mydim, ndim>::apply(c*mass+stiff[K]+dot(b,grad), u);
+		MixedFERegressionBase<RegressionDataEllipticSpaceVarying,IntegratorSpace,ORDER, IntegratorTime, SPLINE_DEGREE, ORDER_DERIVATIVE, mydim, ndim>::apply(c*mass+stiff[K]+dot(b,grad), u);
 	}
 	}
 };
+
+
+// Temporal part
+template<typename InputHandler, typename Integrator, UInt SPLINE_DEGREE, UInt ORDER_DERIVATIVE>
+void MixedSplineRegression<InputHandler, Integrator, SPLINE_DEGREE, ORDER_DERIVATIVE>::setPhi(){
+
+		Spline<Integrator, SPLINE_DEGREE, ORDER_DERIVATIVE> spline(mesh_time_);
+		UInt M = spline.num_knots()-SPLINE_DEGREE-1;
+		UInt m = regressionData_.getNumberofTimeObservations();
+
+		phi_.resize(m, M);
+		Real value;
+
+    for (UInt i = 0; i < m; ++i)
+        for (UInt j = 0; j < M; ++j)
+        {
+					value = spline.BasisFunction(SPLINE_DEGREE, j, this->regressionData_.getTimeLocations()[i]);
+					if (value!=0)
+					{
+						phi_.coeffRef(i,j) = value;
+					}
+				}
+    phi_.makeCompressed();
+}
+
+template<typename InputHandler, typename Integrator, UInt SPLINE_DEGREE, UInt ORDER_DERIVATIVE>
+void MixedSplineRegression<InputHandler, Integrator, SPLINE_DEGREE, ORDER_DERIVATIVE>::setTimeMass(){
+
+    using ETTimeMass = EOExpr<TimeMass>;
+
+    Spline<Integrator, SPLINE_DEGREE, 0> spline(mesh_time_);
+
+    TimeMass ETimeMass;
+    ETTimeMass timeMass(ETimeMass);
+
+    Assembler::operKernel(timeMass, spline, timeMass_);
+}
+
+template<typename InputHandler, typename Integrator, UInt SPLINE_DEGREE, UInt ORDER_DERIVATIVE>
+void MixedSplineRegression<InputHandler, Integrator, SPLINE_DEGREE, ORDER_DERIVATIVE>::smoothSecondDerivative(){
+
+    using ETTimeMass = EOExpr<TimeMass>;
+
+    Spline<Integrator, SPLINE_DEGREE, ORDER_DERIVATIVE> spline(mesh_time_);
+
+    TimeMass ETimeMass;
+    ETTimeMass timeMass(ETimeMass);
+
+    Assembler::operKernel(timeMass, spline, Pt_);
+}
+
+// Parabolic
+template<typename InputHandler>
+void MixedFDRegression<InputHandler>::setDerOperator(){
+	//Build the matrix of finite differences [1/dt1 0 .......... 0]
+	//																			 [-1/dt1 1/dt1 0 ....0]
+	//																										...
+	//																			 [0 ....0 -1/dtM 1/dtM]
+	UInt M = mesh_time_.size()-1;
+	derOpL_.resize(M, M);
+
+	// set the first and the last rows
+	Real delta = mesh_time_[1] - mesh_time_[0];
+	derOpL_.coeffRef(0,0) = 1/delta;
+
+	delta = mesh_time_[M-1] - mesh_time_[M-2];
+	derOpL_.coeffRef(M-1,M-1) = 1/delta;
+	derOpL_.coeffRef(M-1,M-2) = -1/delta;
+
+	for (UInt i = 1; i < M-1; ++i)
+	{
+		delta = mesh_time_[i] - mesh_time_[i-1];
+		derOpL_.coeffRef(i,i-1) = -1/delta;
+		derOpL_.coeffRef(i,i) 	= 1/delta;
+	}
+
+	derOpL_.makeCompressed();
+
+}
 
 #endif
