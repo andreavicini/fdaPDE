@@ -20,29 +20,29 @@ template<typename InputHandler, typename Integrator, UInt ORDER, UInt mydim, UIn
 SEXP regression_skeleton(InputHandler &regressionData, SEXP Rmesh)
 {
 	MeshHandler<ORDER, mydim, ndim> mesh(Rmesh);
-	MixedFERegression<InputHandler, Integrator,ORDER, mydim, ndim> regression(mesh,regressionData);
+	MixedFERegression<InputHandler, Integrator,ORDER, IntegratorGaussP3, 0, 0, mydim, ndim> regression(mesh,regressionData);
 
 	regression.apply();
 
-	const std::vector<VectorXr>& solution = regression.getSolution();
-	const std::vector<Real>& dof = regression.getDOF();
+	const MatrixXv& solution = regression.getSolution();
+	const MatrixXr& dof = regression.getDOF();
 
 	//Copy result in R memory
 	SEXP result = NILSXP;
 	result = PROTECT(Rf_allocVector(VECSXP, 2));
-	SET_VECTOR_ELT(result, 0, Rf_allocMatrix(REALSXP, solution[0].size(), solution.size()));
+	SET_VECTOR_ELT(result, 0, Rf_allocMatrix(REALSXP, solution(0).size(), solution.size()));
 	SET_VECTOR_ELT(result, 1, Rf_allocVector(REALSXP, solution.size()));
 	Real *rans = REAL(VECTOR_ELT(result, 0));
 	for(UInt j = 0; j < solution.size(); j++)
 	{
-		for(UInt i = 0; i < solution[0].size(); i++)
-			rans[i + solution[0].size()*j] = solution[j][i];
+		for(UInt i = 0; i < solution(0).size(); i++)
+			rans[i + solution(0).size()*j] = solution(j)(i);
 	}
 
 	Real *rans2 = REAL(VECTOR_ELT(result, 1));
 	for(UInt i = 0; i < solution.size(); i++)
 	{
-		rans2[i] = dof[i];
+		rans2[i] = dof(i);
 	}
 	UNPROTECT(1);
 	return(result);

@@ -20,7 +20,7 @@ class MixedFERegressionBase
 	protected:
 
 	const MeshHandler<ORDER, mydim, ndim> &mesh_;
-	const std::vector<Real>& mesh_time_;
+	const std::vector<Real> mesh_time_;
 	const UInt N_; //! Number of spatial basis functions.
 	const UInt M_;
 
@@ -55,7 +55,7 @@ class MixedFERegressionBase
 	SpMat B_; 		//! kron(Phi,Psi)
 
 
-	SpMat A_; 		//! A_.asDiagonal() areal matrix
+	VectorXr A_; 		//! A_.asDiagonal() areal matrix
 
 
 	MatrixXr U_;	//! psi^T * W or psi^T * A * W padded with zeros, needed for Woodbury decomposition
@@ -66,9 +66,9 @@ class MixedFERegressionBase
 	Eigen::PartialPivLU<MatrixXr> WTW_;	// Stores the factorization of W^T * W
 	bool isWTWfactorized_ = false;
 	bool isRcomputed_ = false;
-	Eigen::SparseLU<SpMat> R_; //! Stores the factorization of R0k_
+	// Eigen::SparseLU<SpMat> R_; //! Stores the factorization of R0k_
 
-
+	VectorXr forcingTerm_;
 	VectorXr rhs_ft_correction_;	//! right hand side correction for the forcing term:
 	VectorXr rhs_ic_correction_;	//! Initial condition correction (parabolic case)
 	VectorXr _rightHandSide;      //! A Eigen::VectorXr: Stores the system right hand side.
@@ -90,22 +90,26 @@ class MixedFERegressionBase
 	MatrixXr LeftMultiplybyQ(const MatrixXr& u);
 	//! A function which adds Dirichlet boundary conditions before solving the system ( Remark: BC for areal data are not implemented!)
 	void addDirichletBC();
- 	//! A member function which builds the A vector containing the areas of the regions in case of areal data
+	//! A method which takes care of missing values setting to 0 the corresponding rows of B_
+	void addNA();
+	//! A member function which builds the A vector containing the areas of the regions in case of areal data
 	void setA();
 	//! A member function returning the system right hand data
 	void getRightHandData(VectorXr& rightHandData);
-	//! A method which builds all the space matrices
-	void buildSpaceMatrices();
-	//! A method which builds all the matrices needed for assembling matrixNoCov_
-	void buildMatrices();
-	//! A method computing the dofs
-	void computeDegreesOfFreedom(UInt output_indexS, UInt output_indexT, Real lambdaS, Real lambdaT, const SpMat& NWblock);
+	// //! A method computing the dofs
+	// void computeDegreesOfFreedom(UInt output_indexS, UInt output_indexT, Real lambdaS, Real lambdaT, const SpMat& NWblock);
+	// //! A method computing dofs in case of exact GCV, it is called by computeDegreesOfFreedom
+	// void computeDegreesOfFreedomExact(UInt output_indexS, UInt output_indexT, Real lambdaS, Real lambdaT, const SpMat& NWblock);
+	// //! A method computing dofs in case of stochastic GCV, it is called by computeDegreesOfFreedom
+	// void computeDegreesOfFreedomStochastic(UInt output_indexS, UInt output_indexT, Real lambdaS, Real lambdaT, const SpMat& NWblock);
+	// //! A method computing the dofs
+	void computeDegreesOfFreedom(UInt output_index, Real lambda);
 	//! A method computing dofs in case of exact GCV, it is called by computeDegreesOfFreedom
-	void computeDegreesOfFreedomExact(UInt output_indexS, UInt output_indexT, Real lambdaS, Real lambdaT, const SpMat& NWblock);
+	void computeDegreesOfFreedomExact(UInt output_index, Real lambda);
 	//! A method computing dofs in case of stochastic GCV, it is called by computeDegreesOfFreedom
-	void computeDegreesOfFreedomStochastic(UInt output_indexS, UInt output_indexT, Real lambdaS, Real lambdaT, const SpMat& NWblock);
+	void computeDegreesOfFreedomStochastic(UInt output_index, Real lambda);
 	//! A method computing GCV from the dofs
-	void computeGeneralizedCrossValidation(UInt output_indexS, UInt output_indexT, Real lambdaS, Real lambdaT, const SpMat& NWblock);
+	// void computeGeneralizedCrossValidation(UInt output_indexS, UInt output_indexT, Real lambdaS, Real lambdaT, const SpMat& NWblock);
 
   //! A function to factorize the system, using Woodbury decomposition when there are covariates
 	void system_factorize();
@@ -115,32 +119,43 @@ class MixedFERegressionBase
 
 	public:
 	//!A Constructor.
-	MixedFERegressionBase(const MeshHandler<ORDER,mydim,ndim>& mesh, const InputHandler& regressionData): mesh_(mesh), regressionData_(regressionData) {};
+	MixedFERegressionBase(const MeshHandler<ORDER,mydim,ndim>& mesh, const InputHandler& regressionData):
+			mesh_(mesh), N_(mesh.num_nodes()), M_(1), regressionData_(regressionData), _dof(regressionData.getDOF_matrix()){};
+	MixedFERegressionBase(const MeshHandler<ORDER,mydim,ndim>& mesh, const std::vector<Real>& mesh_time, const InputHandler& regressionData):
+  		mesh_(mesh), mesh_time_(mesh_time), N_(mesh.num_nodes()), M_(regressionData.getFlagParabolic()? mesh_time.size()-1 : mesh_time.size()+SPLINE_DEGREE-1), regressionData_(regressionData), _dof(regressionData.getDOF_matrix()){};
 
 	//! The function solving the system, used by the children classes. Saves the result in _solution
 	/*!
 	    \param oper an operator, which is the Stiffness operator in case of Laplacian regularization
 	    \param u the forcing term, will be used only in case of anysotropic nonstationary regression
 	*/
+	//! A method which builds all the space matrices
 	template<typename A>
 	void apply(EOExpr<A> oper,const ForcingTerm & u);
 
 	//! A inline member that returns a VectorXr, returns the whole solution_.
-	inline std::vector<VectorXr> const & getSolution() const{return _solution;};
+	inline MatrixXv const & getSolution() const{return _solution;};
 	//! A function returning the computed dofs of the model
-	inline std::vector<Real> const & getDOF() const{return _dof;};
+	inline MatrixXr const & getDOF() const{return _dof;};
 };
 
-template<typename InputHandler, typename Integrator, UInt ORDER, UInt mydim, UInt ndim>
-class MixedFERegression : public MixedFERegressionBase<InputHandler, Integrator, ORDER, mydim, ndim>
+template<typename InputHandler, typename IntegratorSpace, UInt ORDER, typename IntegratorTime, UInt SPLINE_DEGREE, UInt ORDER_DERIVATIVE, UInt mydim, UInt ndim>
+class MixedFERegression : public MixedFERegressionBase<InputHandler,IntegratorSpace,ORDER,IntegratorTime,SPLINE_DEGREE,ORDER_DERIVATIVE,mydim,ndim>
 {
 public:
-	MixedFERegression(const MeshHandler<ORDER, ndim, mydim>& mesh, const InputHandler& regressionData):MixedFERegressionBase<InputHandler, Integrator, ORDER, mydim, ndim>(mesh, regressionData){};
+	MixedFERegression(const MeshHandler<ORDER, ndim, mydim>& mesh, const InputHandler& regressionData):
+			MixedFERegressionBase<InputHandler,IntegratorSpace,ORDER,IntegratorTime,SPLINE_DEGREE,ORDER_DERIVATIVE,mydim,ndim>(mesh, regressionData){};
+	MixedFERegression(const MeshHandler<ORDER,mydim,ndim>& mesh, const std::vector<Real>& mesh_time, const InputHandler& regressionData):
+			MixedFERegressionBase<InputHandler,IntegratorSpace,ORDER,IntegratorTime,SPLINE_DEGREE,ORDER_DERIVATIVE,mydim,ndim>(mesh, mesh_time, regressionData){};
 
 	void apply()
 	{
+		#ifdef R_VERSION_
+			Rprintf("Option not implemented! \n");
+		#endif
 		std::cout << "Option not implemented! \n";
 	}
+
 };
 
 

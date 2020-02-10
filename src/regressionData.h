@@ -140,7 +140,7 @@ class  RegressionData{
 		inline std::vector<Real> const & getLambdaS() const {return lambdaS_;}
 		//! A method returning the the time penalization term
 		inline std::vector<Real> const & getLambdaT() const {return lambdaT_;}
-		inline bool const & getFlagSpaceTime() const {return flag_SpaceTime_;}
+		inline bool const & isSpaceTime() const {return flag_SpaceTime_;}
 		inline bool const & getFlagMass() const {return flag_mass_;}
 		inline bool const & getFlagParabolic() const {return flag_parabolic_;}
 
