@@ -350,16 +350,27 @@ smooth.FEM<-function(locations = NULL, observations, FEMbasis, lambda,
   f = bigsol[[1]][1:numnodes,]
   g = bigsol[[1]][(numnodes+1):(2*numnodes),]
 
+  dof = bigsol[[2]]
+  GCV_ = bigsol[[3]]
+  bestlambda = bigsol[[4]]+1
+
+  if(!is.null(covariates))
+    beta = matrix(data=bigsol[[5]],nrow=ncol(covariates),ncol=length(lambda))
+  else
+    beta = NULL
+
   # Make Functional objects object
   fit.FEM  = FEM(f, FEMbasis)
   PDEmisfit.FEM = FEM(g, FEMbasis)
 
+  # Prepare return list
   reslist = NULL
-  beta = getBetaCoefficients(locations, observations, fit.FEM, covariates, incidence_matrix, ndim, mydim)
+
   if(GCV == TRUE)
   {
-    seq=getGCV(locations = locations, observations = observations, fit.FEM = fit.FEM, covariates = covariates, incidence_matrix = incidence_matrix, edf = bigsol[[2]], ndim, mydim)
-    reslist=list(fit.FEM = fit.FEM, PDEmisfit.FEM = PDEmisfit.FEM, beta = beta, edf = bigsol[[2]], stderr = seq$stderr, GCV = seq$GCV)
+    stderr=sqrt(GCV_*(length(observations)-dof)/length(observations))
+    reslist=list(fit.FEM = fit.FEM, PDEmisfit.FEM = PDEmisfit.FEM,
+            beta = beta, edf = dof, GCV = GCV_, stderr=stderr, bestlambda = bestlambda)
   }else{
     reslist=list(fit.FEM = fit.FEM, PDEmisfit.FEM = PDEmisfit.FEM, beta = beta)
   }
@@ -367,84 +378,84 @@ smooth.FEM<-function(locations = NULL, observations, FEMbasis, lambda,
   return(reslist)
 }
 
-getBetaCoefficients<-function(locations, observations, fit.FEM, covariates, incidence_matrix = NULL, ndim, mydim)
-{
-  loc_nodes = NULL
-  fnhat = NULL
-  betahat = NULL
-
-  if(!is.null(covariates))
-  {
-    if(is.null(locations))
-    {
-      loc_nodes = (1:length(observations))[!is.na(observations)]
-      fnhat = as.matrix(fit.FEM$coeff[loc_nodes,])
-    }else{
-      loc_nodes = 1:length(observations)
-      fnhat = eval.FEM(FEM = fit.FEM, locations = locations, incidence_matrix = incidence_matrix)
-    }
-    ## #row number of covariates, #col number of functions
-    betahat = matrix(0, nrow = ncol(covariates), ncol = ncol(fnhat))
-    for(i in 1:ncol(fnhat))
-      betahat[,i] = as.vector(lm.fit(covariates,as.vector(observations-fnhat[,i]))$coefficients)
-  }
-
-  return(betahat)
-}
-
-
-getGCV<-function(locations, observations, fit.FEM, covariates = NULL, incidence_matrix = NULL, edf, ndim, mydim)
-{
-  loc_nodes = NULL
-  fnhat = NULL
-
-  edf = as.vector(edf)
-
-  if(is.null(locations) && is.null(incidence_matrix))
-  {
-    loc_nodes = (1:length(observations))[!is.na(observations)]
-    fnhat = as.matrix(fit.FEM$coeff[loc_nodes,])
-  }else{
-    loc_nodes = 1:length(observations)
-    fnhat = eval.FEM(FEM = fit.FEM, locations = locations, incidence_matrix = incidence_matrix)
-  }
-
-  zhat = NULL
-  zhat = matrix(nrow = length(loc_nodes), ncol = length(edf))
-  if(!is.null(covariates))
-  {
-    desmatprod = ( solve( t(covariates) %*% covariates ) ) %*% t(covariates)
-    for ( i in 1:length(edf))
-    {
-      betahat  = desmatprod %*% (observations-fnhat[,i])
-      zhat[,i] = covariates %*% betahat + fnhat[,i]
-    }
-  }else{
-    zhat = fnhat
-  }
-
-  np = length(loc_nodes)
-
-  stderr2 = numeric(length(edf))
-  GCV = numeric(length(edf))
-
-  zhat <- as.matrix(zhat)
-
-  if(any(np - edf <= 0))
-  {
-    warning("Some values of 'edf' are inconstistent. This might be due to ill-conditioning of the linear system. Try increasing value of 'lambda'.")
-  }
-
-  for (i in 1:length(edf))
-  {
-    stderr2[i] = t(observations[loc_nodes] - zhat[,i]) %*% (observations[loc_nodes] - zhat[,i]) / ( np - edf[i] )
-    GCV[i] = ( np / ( np - edf[i] )) * stderr2[i]
-  }
-
-  # NA if stderr2 is negative
-  stderr = vector('numeric', length(stderr2));
-  stderr[stderr2>=0] = sqrt(stderr2[stderr2>=0]);
-  stderr[stderr2<0] = NaN;
-
-  return(list(stderr = stderr, GCV = GCV))
-}
+# getBetaCoefficients<-function(locations, observations, fit.FEM, covariates, incidence_matrix = NULL, ndim, mydim)
+# {
+#   loc_nodes = NULL
+#   fnhat = NULL
+#   betahat = NULL
+#
+#   if(!is.null(covariates))
+#   {
+#     if(is.null(locations))
+#     {
+#       loc_nodes = (1:length(observations))[!is.na(observations)]
+#       fnhat = as.matrix(fit.FEM$coeff[loc_nodes,])
+#     }else{
+#       loc_nodes = 1:length(observations)
+#       fnhat = eval.FEM(FEM = fit.FEM, locations = locations, incidence_matrix = incidence_matrix)
+#     }
+#     ## #row number of covariates, #col number of functions
+#     betahat = matrix(0, nrow = ncol(covariates), ncol = ncol(fnhat))
+#     for(i in 1:ncol(fnhat))
+#       betahat[,i] = as.vector(lm.fit(covariates,as.vector(observations-fnhat[,i]))$coefficients)
+#   }
+#
+#   return(betahat)
+# }
+#
+#
+# getGCV<-function(locations, observations, fit.FEM, covariates = NULL, incidence_matrix = NULL, edf, ndim, mydim)
+# {
+#   loc_nodes = NULL
+#   fnhat = NULL
+#
+#   edf = as.vector(edf)
+#
+#   if(is.null(locations) && is.null(incidence_matrix))
+#   {
+#     loc_nodes = (1:length(observations))[!is.na(observations)]
+#     fnhat = as.matrix(fit.FEM$coeff[loc_nodes,])
+#   }else{
+#     loc_nodes = 1:length(observations)
+#     fnhat = eval.FEM(FEM = fit.FEM, locations = locations, incidence_matrix = incidence_matrix)
+#   }
+#
+#   zhat = NULL
+#   zhat = matrix(nrow = length(loc_nodes), ncol = length(edf))
+#   if(!is.null(covariates))
+#   {
+#     desmatprod = ( solve( t(covariates) %*% covariates ) ) %*% t(covariates)
+#     for ( i in 1:length(edf))
+#     {
+#       betahat  = desmatprod %*% (observations-fnhat[,i])
+#       zhat[,i] = covariates %*% betahat + fnhat[,i]
+#     }
+#   }else{
+#     zhat = fnhat
+#   }
+#
+#   np = length(loc_nodes)
+#
+#   stderr2 = numeric(length(edf))
+#   GCV = numeric(length(edf))
+#
+#   zhat <- as.matrix(zhat)
+#
+#   if(any(np - edf <= 0))
+#   {
+#     warning("Some values of 'edf' are inconstistent. This might be due to ill-conditioning of the linear system. Try increasing value of 'lambda'.")
+#   }
+#
+#   for (i in 1:length(edf))
+#   {
+#     stderr2[i] = t(observations[loc_nodes] - zhat[,i]) %*% (observations[loc_nodes] - zhat[,i]) / ( np - edf[i] )
+#     GCV[i] = ( np / ( np - edf[i] )) * stderr2[i]
+#   }
+#
+#   # NA if stderr2 is negative
+#   stderr = vector('numeric', length(stderr2));
+#   stderr[stderr2>=0] = sqrt(stderr2[stderr2>=0]);
+#   stderr[stderr2<0] = NaN;
+#
+#   return(list(stderr = stderr, GCV = GCV))
+# }
