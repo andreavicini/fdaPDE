@@ -43,7 +43,7 @@ SEXP regression_skeleton(InputHandler &regressionData, SEXP Rmesh)
 	SET_VECTOR_ELT(result, 0, Rf_allocMatrix(REALSXP, solution(0).size(), solution.size()));
 	SET_VECTOR_ELT(result, 1, Rf_allocVector(REALSXP, solution.size()));
 	SET_VECTOR_ELT(result, 2, Rf_allocVector(REALSXP, solution.size()));
-	SET_VECTOR_ELT(result, 3, Rf_alloc(INTSXP));
+	SET_VECTOR_ELT(result, 3, Rf_allocVector(INTSXP, 1));
 	SET_VECTOR_ELT(result, 4, Rf_allocMatrix(REALSXP, beta(0).size(), beta.size()));
 
 	Real *rans = REAL(VECTOR_ELT(result, 0));
@@ -92,7 +92,7 @@ SEXP regression_skeleton_time(InputHandler &regressionData, SEXP Rmesh, SEXP Rme
 	{
 		mesh_time[i] = REAL(Rmesh_time)[i];
 	}
-	SpaceTimeRegression<InputHandler, IntegratorSpace, ORDER, IntegratorTime, SPLINE_DEGREE, ORDER_DERIVATIVE, mydim, ndim> regression(mesh, mesh_time,regressionData);//! load data in a C++ object
+	MixedFERegression<InputHandler, IntegratorSpace, ORDER, IntegratorTime, SPLINE_DEGREE, ORDER_DERIVATIVE, mydim, ndim> regression(mesh, mesh_time,regressionData);//! load data in a C++ object
 
 	regression.apply(); //! solve the problem (compute the _solution, _dof, _GCV, _beta)
 
@@ -465,21 +465,21 @@ SEXP regression_Laplace_time(SEXP Rlocations, SEXP Rtime_locations, SEXP Robserv
 					SEXP GCV, SEXP RGCVmethod, SEXP Rnrealizations, SEXP DOF, SEXP RDOF_matrix)
 {
     //Set input data
-	RegressionDataTime regressionData(Rlocations, Rtime_locations, Robservations, Rorder, RlambdaS, RlambdaT, Rcovariates, RincidenceMatrix, RBCIndices, RBCValues, Rflag_mass, Rflag_parabolic, Ric, GCV, RGCVmethod, Rnrealizations, DOF, RDOF_matrix);
+	RegressionData regressionData(Rlocations, Rtime_locations, Robservations, Rorder, RlambdaS, RlambdaT, Rcovariates, RincidenceMatrix, RBCIndices, RBCValues, Rflag_mass, Rflag_parabolic, Ric, GCV, RGCVmethod, Rnrealizations, DOF, RDOF_matrix);
 
 	UInt mydim=INTEGER(Rmydim)[0];
 	UInt ndim=INTEGER(Rndim)[0];
 
     if(regressionData.getOrder()==1 && mydim==2 && ndim==2)
-    	return(regression_skeleton_time<RegressionDataTime,IntegratorTriangleP2, 1, IntegratorGaussP5, 3, 2, 2, 2>(regressionData, Rmesh, Rmesh_time));
+    	return(regression_skeleton_time<RegressionData,IntegratorTriangleP2, 1, IntegratorGaussP5, 3, 2, 2, 2>(regressionData, Rmesh, Rmesh_time));
     else if(regressionData.getOrder()==2 && mydim==2 && ndim==2)
-		return(regression_skeleton_time<RegressionDataTime,IntegratorTriangleP4, 2, IntegratorGaussP5, 3, 2, 2, 2>(regressionData, Rmesh, Rmesh_time));
+		return(regression_skeleton_time<RegressionData,IntegratorTriangleP4, 2, IntegratorGaussP5, 3, 2, 2, 2>(regressionData, Rmesh, Rmesh_time));
     else if(regressionData.getOrder()==1 && mydim==2 && ndim==3)
-		return(regression_skeleton_time<RegressionDataTime,IntegratorTriangleP2, 1, IntegratorGaussP5, 3, 2, 2, 3>(regressionData, Rmesh, Rmesh_time));
+		return(regression_skeleton_time<RegressionData,IntegratorTriangleP2, 1, IntegratorGaussP5, 3, 2, 2, 3>(regressionData, Rmesh, Rmesh_time));
    else if(regressionData.getOrder()==2 && mydim==2 && ndim==3)
-		return(regression_skeleton_time<RegressionDataTime,IntegratorTriangleP4, 2, IntegratorGaussP5, 3, 2, 2, 3>(regressionData, Rmesh, Rmesh_time));
+		return(regression_skeleton_time<RegressionData,IntegratorTriangleP4, 2, IntegratorGaussP5, 3, 2, 2, 3>(regressionData, Rmesh, Rmesh_time));
 	else if(regressionData.getOrder()==1 && mydim==3 && ndim==3)
-		return(regression_skeleton_time<RegressionDataTime,IntegratorTetrahedronP2, 1, IntegratorGaussP5, 3, 2, 3, 3>(regressionData, Rmesh, Rmesh_time));
+		return(regression_skeleton_time<RegressionData,IntegratorTetrahedronP2, 1, IntegratorGaussP5, 3, 2, 3, 3>(regressionData, Rmesh, Rmesh_time));
     return(NILSXP);
 }
 
@@ -518,19 +518,19 @@ SEXP regression_PDE_time(SEXP Rlocations, SEXP Rtime_locations, SEXP Robservatio
 					SEXP RlambdaS, SEXP RlambdaT, SEXP RK, SEXP Rbeta, SEXP Rc, SEXP Rcovariates, SEXP RincidenceMatrix,
 					SEXP RBCIndices, SEXP RBCValues, SEXP Rflag_mass, SEXP Rflag_parabolic, SEXP Ric, SEXP GCV, SEXP RGCVmethod, SEXP Rnrealizations, SEXP DOF, SEXP RDOF_matrix)
 {
-	RegressionDataTimeElliptic regressionData(Rlocations, Rtime_locations, Robservations, Rorder, RlambdaS, RlambdaT, RK, Rbeta, Rc, Rcovariates, RincidenceMatrix, RBCIndices, RBCValues, Rflag_mass, Rflag_parabolic, Ric, GCV, RGCVmethod, Rnrealizations, DOF, RDOF_matrix);
+	RegressionDataElliptic regressionData(Rlocations, Rtime_locations, Robservations, Rorder, RlambdaS, RlambdaT, RK, Rbeta, Rc, Rcovariates, RincidenceMatrix, RBCIndices, RBCValues, Rflag_mass, Rflag_parabolic, Ric, GCV, RGCVmethod, Rnrealizations, DOF, RDOF_matrix);
 
 	UInt mydim=INTEGER(Rmydim)[0];
 	UInt ndim=INTEGER(Rndim)[0];
 
 	if(regressionData.getOrder() == 1 && ndim==2)
-		return(regression_skeleton_time<RegressionDataTimeElliptic,IntegratorTriangleP2, 1, IntegratorGaussP5, 3, 2, 2, 2>(regressionData, Rmesh, Rmesh_time));
+		return(regression_skeleton_time<RegressionDataElliptic,IntegratorTriangleP2, 1, IntegratorGaussP5, 3, 2, 2, 2>(regressionData, Rmesh, Rmesh_time));
 	else if(regressionData.getOrder() == 2 && ndim==2)
-		return(regression_skeleton_time<RegressionDataTimeElliptic,IntegratorTriangleP4, 2, IntegratorGaussP5, 3, 2, 2, 2>(regressionData, Rmesh, Rmesh_time));
+		return(regression_skeleton_time<RegressionDataElliptic,IntegratorTriangleP4, 2, IntegratorGaussP5, 3, 2, 2, 2>(regressionData, Rmesh, Rmesh_time));
 	else if(regressionData.getOrder() == 1 && ndim==3)
-		return(regression_skeleton_time<RegressionDataTimeElliptic,IntegratorTriangleP2, 1, IntegratorGaussP5, 3, 2, 2, 3>(regressionData, Rmesh, Rmesh_time));
+		return(regression_skeleton_time<RegressionDataElliptic,IntegratorTriangleP2, 1, IntegratorGaussP5, 3, 2, 2, 3>(regressionData, Rmesh, Rmesh_time));
 	else if(regressionData.getOrder() == 2 && ndim==3)
-		return(regression_skeleton_time<RegressionDataTimeElliptic,IntegratorTriangleP4, 2, IntegratorGaussP5, 3, 2, 2, 3>(regressionData, Rmesh, Rmesh_time));
+		return(regression_skeleton_time<RegressionDataElliptic,IntegratorTriangleP4, 2, IntegratorGaussP5, 3, 2, 2, 3>(regressionData, Rmesh, Rmesh_time));
 	return(NILSXP);
 }
 
@@ -573,19 +573,19 @@ SEXP regression_PDE_space_varying_time(SEXP Rlocations, SEXP Rtime_locations, SE
 					SEXP RBCIndices, SEXP RBCValues, SEXP Rflag_mass, SEXP Rflag_parabolic, SEXP Ric, SEXP GCV, SEXP RGCVmethod, SEXP Rnrealizations, SEXP DOF, SEXP RDOF_matrix)
 {
     //Set data
-	RegressionDataTimeEllipticSpaceVarying regressionData(Rlocations, Rtime_locations, Robservations, Rorder, RlambdaS, RlambdaT, RK, Rbeta, Rc, Ru, Rcovariates, RincidenceMatrix, RBCIndices, RBCValues, Rflag_mass, Rflag_parabolic, Ric, GCV, RGCVmethod, Rnrealizations, DOF, RDOF_matrix);
+	RegressionDataEllipticSpaceVarying regressionData(Rlocations, Rtime_locations, Robservations, Rorder, RlambdaS, RlambdaT, RK, Rbeta, Rc, Ru, Rcovariates, RincidenceMatrix, RBCIndices, RBCValues, Rflag_mass, Rflag_parabolic, Ric, GCV, RGCVmethod, Rnrealizations, DOF, RDOF_matrix);
 
 	UInt mydim=INTEGER(Rmydim)[0];
 	UInt ndim=INTEGER(Rndim)[0];
 
 	if(regressionData.getOrder() == 1 && ndim==2)
-		return(regression_skeleton_time<RegressionDataTimeEllipticSpaceVarying,IntegratorTriangleP2, 1, IntegratorGaussP5, 3, 2, 2, 2>(regressionData, Rmesh, Rmesh_time));
+		return(regression_skeleton_time<RegressionDataEllipticSpaceVarying,IntegratorTriangleP2, 1, IntegratorGaussP5, 3, 2, 2, 2>(regressionData, Rmesh, Rmesh_time));
 	else if(regressionData.getOrder() == 2 && ndim==2)
-		return(regression_skeleton_time<RegressionDataTimeEllipticSpaceVarying,IntegratorTriangleP4, 2, IntegratorGaussP5, 3, 2, 2, 2>(regressionData, Rmesh, Rmesh_time));
+		return(regression_skeleton_time<RegressionDataEllipticSpaceVarying,IntegratorTriangleP4, 2, IntegratorGaussP5, 3, 2, 2, 2>(regressionData, Rmesh, Rmesh_time));
 	else if(regressionData.getOrder() == 1 && ndim==3)
-		return(regression_skeleton_time<RegressionDataTimeEllipticSpaceVarying,IntegratorTriangleP2, 1, IntegratorGaussP5, 3, 2, 2, 3>(regressionData, Rmesh, Rmesh_time));
+		return(regression_skeleton_time<RegressionDataEllipticSpaceVarying,IntegratorTriangleP2, 1, IntegratorGaussP5, 3, 2, 2, 3>(regressionData, Rmesh, Rmesh_time));
 	else if(regressionData.getOrder() == 2 && ndim==3)
-		return(regression_skeleton_time<RegressionDataTimeEllipticSpaceVarying,IntegratorTriangleP4, 2, IntegratorGaussP5, 3, 2, 2, 3>(regressionData, Rmesh, Rmesh_time));
+		return(regression_skeleton_time<RegressionDataEllipticSpaceVarying,IntegratorTriangleP4, 2, IntegratorGaussP5, 3, 2, 2, 3>(regressionData, Rmesh, Rmesh_time));
 	return(NILSXP);
 }
 
