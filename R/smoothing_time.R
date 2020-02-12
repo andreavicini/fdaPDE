@@ -117,7 +117,7 @@ smooth.FEM.time<-function(locations = NULL, time_locations=NULL, observations, F
   if(!is.null(DOF_matrix))
       DOF=FALSE
 
-  space_varying=checkSmoothingParameters(locations, time_locations, observations, FEMbasis, time_mesh, lambdaS, lambdaT, covariates, PDE_parameters, incidence_matrix, BC, FLAG_MASS, FLAG_PARABOLIC, IC, GCV, GCVMETHOD, nrealizations, DOF, DOF_matrix)
+  space_varying=checkSmoothingParameters_time(locations, time_locations, observations, FEMbasis, time_mesh, lambdaS, lambdaT, covariates, PDE_parameters, incidence_matrix, BC, FLAG_MASS, FLAG_PARABOLIC, IC, GCV, GCVMETHOD, nrealizations, DOF, DOF_matrix)
 
   ## Coverting to format for internal usage
   if(!is.null(locations))
@@ -153,7 +153,7 @@ smooth.FEM.time<-function(locations = NULL, time_locations=NULL, observations, F
   }
 
 
-  checkSmoothingParametersSize(locations, time_locations, observations, FEMbasis, time_mesh, lambdaS, lambdaT, covariates, PDE_parameters, incidence_matrix, BC, FLAG_MASS, FLAG_PARABOLIC, IC, GCV, DOF, DOF_matrix, space_varying, ndim, mydim)
+  checkSmoothingParametersSize_time(locations, time_locations, observations, FEMbasis, time_mesh, lambdaS, lambdaT, covariates, PDE_parameters, incidence_matrix, BC, FLAG_MASS, FLAG_PARABOLIC, IC, GCV, DOF, DOF_matrix, space_varying, ndim, mydim)
   observations<-as.vector(observations)
 
   if(is.null(time_locations))

@@ -224,7 +224,7 @@ class Mumps{
     #define ICNTL(I) icntl[(I)-1] /* macro s.t. indices match documentation */
     /* No outputs */
     id.ICNTL(1)=-1; id.ICNTL(2)=-1; id.ICNTL(3)=-1; id.ICNTL(4)=0;
-		id.ICNTL(14)=200;
+		id.ICNTL(14)=1000;
     /* Call the MUMPS package. */
     id.job=6;
     dmumps_c(&id);

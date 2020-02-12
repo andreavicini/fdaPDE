@@ -63,7 +63,6 @@ class MixedFERegressionBase
 	Eigen::SparseLU<SpMat> R0dec_; //! Stores the factorization of R0_
 
 
-	VectorXr forcingTerm_;
 	VectorXr rhs_ft_correction_;	//! right hand side correction for the forcing term:
 	VectorXr rhs_ic_correction_;	//! Initial condition correction (parabolic case)
 	VectorXr _rightHandSide;      //! A Eigen::VectorXr: Stores the system right hand side.

@@ -272,6 +272,8 @@ MatrixXr MixedFERegressionBase<InputHandler,IntegratorSpace,ORDER, IntegratorTim
 
 	// Resolution of the system matrixNoCov * x1 = b
 	MatrixXr x1 = matrixNoCovdec_.solve(b);
+	// MatrixXr x1(b.rows(),b.cols());
+ 	// Mumps::template solve(matrixNoCov_,b,x1);
 
 	if (regressionData_.getCovariates().rows() != 0) {
 		// Resolution of G * x2 = V * x1
@@ -319,10 +321,21 @@ void MixedFERegressionBase<InputHandler,IntegratorSpace,ORDER, IntegratorTime, S
 	{
 		if (regressionData_.isLocationsByNodes())
 		{
-			for (auto i=0; i<nlocations;++i)
+			if(!regressionData_.isSpaceTime())
 			{
-				auto index_i = regressionData_.getObservationsIndices()[i];
-				rightHandData(index_i) = regressionData_.getObservations()[i];
+				for (auto i=0; i<nlocations;++i)
+				{
+					auto index_i = regressionData_.getObservationsIndices()[i];
+					rightHandData(index_i) = regressionData_.getObservations()[i];
+				}
+			}
+			else
+			{
+				for (auto i=0; i<regressionData_.getObservationsIndices().size();++i)
+				{
+					auto index_i = regressionData_.getObservationsIndices()[i];
+					rightHandData(index_i) = regressionData_.getObservations()[index_i];
+				}
 			}
 		}
 		else if (regressionData_.getNumberOfRegions() == 0) //pointwise data
@@ -652,7 +665,6 @@ void MixedFERegressionBase<InputHandler, IntegratorSpace, ORDER, IntegratorTime,
 		SpMat L = FiniteDifference.getDerOpL(); // Matrix of finite differences
 		IM.setIdentity();
 		LR0k_ = kroneckerProduct(L,R0_);
-		Ptk_.resize(N_*M_,N_*M_); // not needed for parabolic case
 		phi = IM;
 		//! right hand side correction for the initial condition:
 		rhs_ic_correction_ = (1/(mesh_time_[1]-mesh_time_[0]))*(R0_*regressionData_.getInitialValues());
@@ -676,7 +688,6 @@ void MixedFERegressionBase<InputHandler, IntegratorSpace, ORDER, IntegratorTime,
 		phi = Spline.getPhi();
 		SpMat Pt = Spline.getPt();
 		Ptk_ = kroneckerProduct(Pt,IN);
-		LR0k_.resize(N_*M_,N_*M_); // not needed for parabolic case
 	}
 	// Make the Kronecker product to tensorize the system
 	SpMat psi_temp =  psi_;
@@ -702,7 +713,7 @@ void MixedFERegressionBase<InputHandler, IntegratorSpace, ORDER, IntegratorTime,
 		{
 			for(UInt j=0; j<M_; j++)
 			{
-				rhs_ft_correction_(i+j*N_) = forcingTerm_(i);
+				rhs_ft_correction_(i+j*N_) = forcingTerm(i);
 			}
 		}
 	}
@@ -721,10 +732,6 @@ void MixedFERegressionBase<InputHandler,IntegratorSpace,ORDER, IntegratorTime, S
 	typedef EOExpr<Mass> ETMass; Mass EMass; ETMass mass(EMass);
 	Assembler::operKernel(oper, mesh_, fe, R1_);
 	Assembler::operKernel(mass, mesh_, fe, R0_);
-	VectorXr rightHandData;
-	getRightHandData(rightHandData); //updated
-	this->_rightHandSide = VectorXr::Zero(2*nnodes);
-	this->_rightHandSide.topRows(nnodes)=rightHandData;
 
 	if(this->isSpaceVarying)
 	{
@@ -738,6 +745,10 @@ void MixedFERegressionBase<InputHandler,IntegratorSpace,ORDER, IntegratorTime, S
 		buildSpaceTimeMatrices();
 	}
 
+	VectorXr rightHandData;
+	getRightHandData(rightHandData); //updated
+	this->_rightHandSide = VectorXr::Zero(2*nnodes);
+	this->_rightHandSide.topRows(nnodes)=rightHandData;
 
 	this->_solution.resize(regressionData_.getLambdaS().size(),regressionData_.getLambdaT().size());
 	this->_dof.resize(regressionData_.getLambdaS().size(),regressionData_.getLambdaT().size());
@@ -758,7 +769,7 @@ void MixedFERegressionBase<InputHandler,IntegratorSpace,ORDER, IntegratorTime, S
 			Real lambdaT = regressionData_.getLambdaT()[t];
 			SpMat R0_lambda = (-lambdaS)*R0_; // build the SouthEast block of the matrix
 			SpMat R1_lambda = (-lambdaS)*R1_;
-			if(regressionData_.isSpaceTime())
+			if(regressionData_.isSpaceTime() && regressionData_.getFlagParabolic())
 				R1_lambda -= lambdaS*(lambdaT*LR0k_); // build the SouthWest block of the matrix (also the NorthEast block transposed)
 
 			SpMat NWblock;
