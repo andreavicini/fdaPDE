@@ -402,7 +402,7 @@ void MixedFERegressionBase<InputHandler,IntegratorSpace,ORDER, IntegratorTime, S
 	Real degrees=0;
 
 	// Case 1: MUMPS
-	if (regressionData_.isLocationsByNodes() && regressionData_.getCovariates().rows() == 0 && !regressionData_.isSpaceTime())
+	if (regressionData_.isLocationsByNodes() && regressionData_.getCovariates().rows() == 0 && (!regressionData_.isSpaceTime()||regressionData_.getFlagParabolic()))
 	{
 		auto k = regressionData_.getObservationsIndices();
 		DMUMPS_STRUC_C id;
@@ -412,7 +412,7 @@ void MixedFERegressionBase<InputHandler,IntegratorSpace,ORDER, IntegratorTime, S
         //MPI_Init(&argc,&argv);
 		//ierr = MPI_Comm_rank(MPI_COMM_WORLD, &myid);
 
-		id.sym=0;
+		id.sym=2;
 		id.par=1;
 		id.job=JOB_INIT;
 		id.comm_fortran=USE_COMM_WORLD;
@@ -429,9 +429,12 @@ void MixedFERegressionBase<InputHandler,IntegratorSpace,ORDER, IntegratorTime, S
 			id.n=2*nnodes;
 			for (int j=0; j<matrixNoCov_.outerSize(); ++j){
 				for (SpMat::InnerIterator it(matrixNoCov_,j); it; ++it){
-					irn.push_back(it.row()+1);
-					jcn.push_back(it.col()+1);
-					a.push_back(it.value());
+					if(it.col()>it.row())
+					{
+						irn.push_back(it.row()+1);
+						jcn.push_back(it.col()+1);
+						a.push_back(it.value());
+					}
 				}
 			}
 		//}

@@ -146,6 +146,7 @@ CPP_smooth.volume.FEM.time<-function(locations, time_locations, observations, FE
       betaIC = ICsol[[5]]
       IC = ICsol[[1]][1:FEMbasis$mesh$nnodes,ICsol[[4]][1]+1] ## best IC estimation
       covariates=covariates[(NobsIC+1):nrow(covariates)]
+      covariates <- as.matrix(covariates)
     }
     else
     {
