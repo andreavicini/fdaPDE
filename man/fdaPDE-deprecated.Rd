@@ -19,23 +19,53 @@ R_mass(FEMbasis)
 
 R_stiff(FEMbasis)
 
-R_smooth.FEM.basis(locations, observations, FEMbasis, lambda,
-  covariates = NULL, GCV)
+R_smooth.FEM.basis(
+  locations,
+  observations,
+  FEMbasis,
+  lambda,
+  covariates = NULL,
+  GCV
+)
 
 R_eval.FEM.basis(FEMbasis, locations, nderivs = matrix(0, 1, 2))
 
 R_eval.FEM(FEM, locations)
 
-smooth.FEM.basis(locations = NULL, observations, FEMbasis, lambda,
-  covariates = NULL, BC = NULL, GCV = FALSE, CPP_CODE = TRUE)
+smooth.FEM.basis(
+  locations = NULL,
+  observations,
+  FEMbasis,
+  lambda,
+  covariates = NULL,
+  BC = NULL,
+  GCV = FALSE,
+  CPP_CODE = TRUE
+)
 
-smooth.FEM.PDE.basis(locations = NULL, observations, FEMbasis, lambda,
-  PDE_parameters, covariates = NULL, BC = NULL, GCV = FALSE,
-  CPP_CODE = TRUE)
+smooth.FEM.PDE.basis(
+  locations = NULL,
+  observations,
+  FEMbasis,
+  lambda,
+  PDE_parameters,
+  covariates = NULL,
+  BC = NULL,
+  GCV = FALSE,
+  CPP_CODE = TRUE
+)
 
-smooth.FEM.PDE.sv.basis(locations = NULL, observations, FEMbasis, lambda,
-  PDE_parameters, covariates = NULL, BC = NULL, GCV = FALSE,
-  CPP_CODE = TRUE)
+smooth.FEM.PDE.sv.basis(
+  locations = NULL,
+  observations,
+  FEMbasis,
+  lambda,
+  PDE_parameters,
+  covariates = NULL,
+  BC = NULL,
+  GCV = FALSE,
+  CPP_CODE = TRUE
+)
 
 create.MESH.2D(nodes, nodesattributes = NA, segments = NA, holes = NA, 
                      triangles = NA, order = 1, verbosity = 0)
@@ -45,13 +75,16 @@ refine.MESH.2D(mesh, minimum_angle, maximum_area, delaunay, verbosity)
 \method{plot}{MESH2D}(x, ...)
 }
 \arguments{
-\item{FEMbasis}{A \code{FEM} object representing the Finite Element basis. See \code{\link{create.FEM.basis}}.}
+\item{FEMbasis}{A \code{FEMbasis} object describing the Finite Element basis, as created by \code{\link{create.FEM.basis}}.}
 
-\item{locations}{A #observations-by-2 matrix where each row specifies the spatial coordinates of the corresponding observations in the vector \code{observations}.}
+\item{locations}{A #observations-by-2 matrix where each row specifies the spatial coordinates \code{x} and \code{y} of the corresponding observations in the vector \code{observations}.
+This parameter can be \code{NULL}. In this case the spatial coordinates of the corresponding observations are assigned as specified in \code{observations}.}
 
-\item{observations}{A #observations vector with the observed data values over the domain. The locations of the observations can be specified with the \code{locations} argument.
-Otherwise if only the vector of observations is given, these are consider to be located in the corresponding node in the table nodes of the mesh. In this last
-case, an \code{NA} value in the observations vector indicates that there is no observation associated to the corresponding node.}
+\item{observations}{A vector of length #observations with the observed data values over the domain. 
+The locations of the observations can be specified with the \code{locations} argument. 
+Otherwise if only the vector of observations is given, these are consider to be located in the corresponding node in the table
+\code{nodes} of the mesh. In this last case, an \code{NA} value in the \code{observations} vector indicates that there is no observation associated to the corresponding
+ node.}
 
 \item{lambda}{A scalar or vector of smoothing parameters.}
 
@@ -71,9 +104,16 @@ be 0,1 or 2, where 0 indicates that only the basis functions, and not their deri
 
 \item{CPP_CODE}{Boolean. If \code{TRUE} the computation relies on the C++ implementation of the algorithm. This usually ensures a much faster computation.}
 
-\item{PDE_parameters}{A list specifying the parameters of the elliptic PDE in the regularizing term: \code{K}, a 2-by-2 matrix of diffusion coefficients. This induces an anisotropic 
-smoothing with a preferential direction that corresponds to the first eigenvector of the diffusion matrix K; \code{b}, a vector of length 2 of advection coefficients. This induces a 
-smoothing only in the direction specified by the vector \code{b}; \code{c}, a scalar reaction coefficient. \code{c} induces a shrinkage of the surface to zero}
+\item{PDE_parameters}{A list specifying the space-varying parameters of the elliptic PDE in the regularizing term: \code{K}, a function that for each spatial location in the spatial domain 
+(indicated by the vector of the 2 spatial coordinates) returns a 2-by-2 matrix of diffusion coefficients. This induces an anisotropic 
+smoothing with a local preferential direction that corresponds to the first eigenvector of the diffusion matrix K.The function must support recycling for efficiency reasons, thus if the input parameter is a #point-by-2 matrix, the output should be
+an array with dimensions 2-by-2-by-#points.\code{b}, a function that for each spatial location in the spatial domain returns 
+a vector of length 2 of transport coefficients. This induces a local smoothing only in the direction specified by the vector \code{b}. The function must support recycling for efficiency reasons, thus if the input parameter is a #point-by-2 matrix, the output should be
+a matrix with dimensions 2-by-#points; \code{c}, a function that for each spatial location in the spatial domain  returns a scalar reaction coefficient.
+\code{c} induces a shrinkage of the surface to zero. The function must support recycling for efficiency reasons, thus if the input parameter is a #point-by-2 matrix, the output should be
+a vector with length #points; \code{u}, a function that for each spatial location in the spatial domain  returns a scalar reaction coefficient.
+\code{u} induces a reaction effect. The function must support recycling for efficiency reasons, thus if the input parameter is a #point-by-2 matrix, the output should be
+a vector with length #points.}
 
 \item{nodes}{A #nodes-by-2 matrix containing the x and y coordinates of the mesh nodes.}
 
@@ -99,9 +139,7 @@ In this case the function \code{create.MESH.2D} is used to produce a complete ME
 These are
 respectively used for linear (order = 1) and quadratic (order = 2) Finite Elements. Default is \code{order} = 1.}
 
-\item{verbosity}{This can be '0', '1' or '2'. It indicates the level of verbosity in the triangulation process. When \code{verbosity} = 0 no message is returned
-during the triangulation. When \code{verbosity} = 2 the triangulation process is described step by step by displayed messages.
-Default is \code{verbosity} = 0.}
+\item{verbosity}{This can be '0', '1' or '2'. It indicates the level of verbosity in the triangulation process.}
 
 \item{mesh}{A MESH2D object representing the triangular mesh, created by \link{create.MESH.2D}.}
 
@@ -114,96 +152,6 @@ Default is \code{verbosity} = 0.}
 \item{x}{A MESH2D object defining the triangular mesh, as generated by \code{create.Mesh.2D} or \code{refine.Mesh.2D}.}
 
 \item{...}{Arguments representing graphical options to be passed to \link[graphics]{par}.}
-
-\item{FEMbasis}{A \code{FEMbasis} object representing the basis; See \code{\link{create.FEM.basis}}.}
-
-\item{FEMbasis}{A F\code{EMbasis} object describing the Finite Element basis, as created by \code{\link{create.FEM.basis}}.}
-
-\item{locations}{A 2-columns matrix with the spatial locations where the bases should be evaluated.}
-
-\item{FEMbasis}{An \code{FEMbasis} object representing the Finite Element basis; See \link{create.FEM.basis}.}
-
-\item{locations}{A 2-columns matrix with the spatial locations where the FEM object should be evaluated}
-
-\item{observations}{A vector of length #observations with the observed data values over the domain. 
-The locations of the observations can be specified with the \code{locations} argument. 
-Otherwise if only the vector of observations is given, these are consider to be located in the corresponding node in the table
-\code{nodes} of the mesh. In this last case, an \code{NA} value in the \code{observations} vector indicates that there is no observation associated to the corresponding
- node.}
-
-\item{locations}{A #observations-by-2 matrix where each row specifies the spatial coordinates \code{x} and \code{y} of the corresponding observations in the vector \code{observations}.
-This parameter can be \code{NULL}. In this case the spatial coordinates of the corresponding observations are assigned as specified in \code{observations}.}
-
-\item{FEMbasis}{A \code{FEMbasis} object describing the Finite Element basis, as created by \code{\link{create.FEM.basis}}.}
-
-\item{lambda}{A scalar or vector of smoothing parameters.}
-
-\item{covariates}{A #observations-by-#covariates matrix where each row represents the covariates associated with the corresponding observed data value in \code{observations}.}
-
-\item{GCV}{Boolean. If \code{TRUE} the following quantities are computed: the trace of the smoothing matrix, the estimated error standard deviation,  and 
-the Generalized Cross Validation criterion, for each value of the smoothing parameter specified in \code{lambda}.}
-
-\item{observations}{A vector of length #observations with the observed data values over the domain. 
-The locations of the observations can be specified with the \code{locations} argument. 
-Otherwise if only the vector of observations is given, these are consider to be located in the corresponding node in the table
-\code{nodes} of the mesh. In this last case, an \code{NA} value in the \code{observations} vector indicates that there is no observation associated to the corresponding
- node.
-\code{NA} values are admissible to indicate that the node is not associated with any observed data value.}
-
-\item{locations}{A #observations-by-2 matrix where each row specifies the spatial coordinates \code{x} and \code{y} of the corresponding observations in the vector \code{observations}.
-This parameter can be \code{NULL}. In this case the spatial coordinates of the corresponding observations are assigned as specified in \code{observations}.}
-
-\item{FEMbasis}{A \code{FEMbasis} object describing the Finite Element basis, as created by \code{\link{create.FEM.basis}}.}
-
-\item{lambda}{A scalar or vector of smoothing parameters.}
-
-\item{covariates}{A #observations-by-#covariates matrix where each row represents the covariates associated with the corresponding observed data value in \code{observations}.}
-
-\item{BC}{A list with two vectors: 
-\code{BC_indices}, a vector with the indices in \code{nodes} of boundary nodes where a Dirichlet Boundary Condition should be applied;
-\code{BC_values}, a vector with the values that the spatial field must take at the nodes indicated in \code{BC_indices}.}
-
-\item{GCV}{Boolean. If \code{TRUE} the following quantities are computed: the trace of the smoothing matrix, the estimated error standard deviation,  and 
-the Generalized Cross Validation criterion, for each value of the smoothing parameter specified in \code{lambda}.}
-
-\item{CPP_CODE}{Boolean. If \code{TRUE} the computation relies on the C++ implementation of the algorithm. This usually ensures a much faster computation.}
-
-\item{observations}{A vector of length #observations with the observed data values over the domain. 
-The locations of the observations can be specified with the \code{locations} argument. 
-Otherwise if only the vector of observations is given, these are consider to be located in the corresponding node in the table
-\code{nodes} of the mesh. In this last case, an \code{NA} value in the \code{observations} vector indicates that there is no observation associated to the corresponding
- node.}
-
-\item{locations}{A #observations-by-2 matrix where each row specifies the spatial coordinates \code{x} and \code{y} of the corresponding observations in the vector \code{observations}.
-This parameter can be \code{NULL}. In this case the spatial coordinates of the corresponding observations are assigned as specified in \code{observations}.}
-
-\item{FEMbasis}{A \code{FEMbasis} object describing the Finite Element basis, as created by \code{\link{create.FEM.basis}}.}
-
-\item{lambda}{A scalar or vector of smoothing parameters.}
-
-\item{PDE_parameters}{A list specifying the space-varying parameters of the elliptic PDE in the regularizing term: \code{K}, a function that for each spatial location in the spatial domain 
-(indicated by the vector of the 2 spatial coordinates) returns a 2-by-2 matrix of diffusion coefficients. This induces an anisotropic 
-smoothing with a local preferential direction that corresponds to the first eigenvector of the diffusion matrix K.The function must support recycling for efficiency reasons, thus if the input parameter is a #point-by-2 matrix, the output should be
-an array with dimensions 2-by-2-by-#points.\code{b}, a function that for each spatial location in the spatial domain returns 
-a vector of length 2 of transport coefficients. This induces a local smoothing only in the direction specified by the vector \code{b}. The function must support recycling for efficiency reasons, thus if the input parameter is a #point-by-2 matrix, the output should be
-a matrix with dimensions 2-by-#points; \code{c}, a function that for each spatial location in the spatial domain  returns a scalar reaction coefficient.
-\code{c} induces a shrinkage of the surface to zero. The function must support recycling for efficiency reasons, thus if the input parameter is a #point-by-2 matrix, the output should be
-a vector with length #points; \code{u}, a function that for each spatial location in the spatial domain  returns a scalar reaction coefficient.
-\code{u} induces a reaction effect. The function must support recycling for efficiency reasons, thus if the input parameter is a #point-by-2 matrix, the output should be
-a vector with length #points.}
-
-\item{covariates}{A #observations-by-#covariates matrix where each row represents the covariates associated with the corresponding observed data value in \code{observations}.}
-
-\item{BC}{A list with two vectors: 
-\code{BC_indices}, a vector with the indices in \code{nodes} of boundary nodes where a Dirichlet Boundary Condition should be applied;
-\code{BC_values}, a vector with the values that the spatial field must take at the nodes indicated in \code{BC_indices}.}
-
-\item{GCV}{Boolean. If \code{TRUE} the following quantities are computed: the trace of the smoothing matrix, the estimated error standard deviation,  and 
-the Generalized Cross Validation criterion, for each value of the smoothing parameter specified in \code{lambda}.}
-
-\item{CPP_CODE}{Boolean. If \code{TRUE} the computation relies on the C++ implementation of the algorithm. This usually ensures a much faster computation.}
-
-\item{verbosity}{This can be '0', '1' or '2'. It indicates the level of verbosity in the triangulation process.}
 }
 \value{
 A square matrix with the integrals of all the basis' functions pairwise products.

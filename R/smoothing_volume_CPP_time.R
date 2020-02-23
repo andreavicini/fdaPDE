@@ -59,7 +59,7 @@ CPP_smooth.volume.FEM.time<-function(locations, time_locations, observations, FE
   storage.mode(time_locations) <- "double"
   time_mesh <- as.matrix(time_mesh)
   storage.mode(time_mesh) <- "double"
-  data <- as.vector(observations)
+  observations <- as.vector(observations)
   storage.mode(observations) <- "double"
   storage.mode(FEMbasis$mesh$order) <- "integer"
   storage.mode(FEMbasis$mesh$nnodes) <- "integer"
@@ -145,7 +145,7 @@ CPP_smooth.volume.FEM.time<-function(locations, time_locations, observations, FE
     {
       betaIC = ICsol[[5]]
       IC = ICsol[[1]][1:FEMbasis$mesh$nnodes,ICsol[[4]][1]+1] ## best IC estimation
-      covariates=covariates[(NobsIC+1):nrow(covariates)]
+      covariates=covariates[(NobsIC+1):nrow(covariates),]
       covariates <- as.matrix(covariates)
     }
     else
@@ -168,7 +168,7 @@ CPP_smooth.volume.FEM.time<-function(locations, time_locations, observations, FE
   storage.mode(BC$BC_values) <-"double"
 
   ## Call C++ function
-  bigsol <- .Call("regression_Laplace_time", locations, time_locations, data, FEMbasis$mesh, time_mesh, FEMbasis$mesh$order, mydim, ndim, lambdaS, lambdaT, covariates,
+  bigsol <- .Call("regression_Laplace_time", locations, time_locations, observations, FEMbasis$mesh, time_mesh, FEMbasis$mesh$order, mydim, ndim, lambdaS, lambdaT, covariates,
                   incidence_matrix, BC$BC_indices, BC$BC_values, FLAG_MASS, FLAG_PARABOLIC,
                   IC, GCV, GCVMETHOD, nrealizations, package = "fdaPDE")
 

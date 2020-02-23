@@ -1,10 +1,16 @@
-#' Spatial regression with differential regularization
+#' @useDynLib fdaPDE
+#' @import Matrix plot3D rgl plot3Drgl geometry
+#' @importFrom grDevices heat.colors palette
+#' @importFrom graphics plot segments
+NULL
+
+#' Space-time regression with differential regularization
 
 #' @param locations A matrix where each row specifies the spatial coordinates \code{x} and \code{y} (and \code{z} if ndim=3) of the corresponding observations in the vector \code{observations}.
-#' This parameter can be \code{NULL}. In this case the spatial coordinates are assumed to coincide with the nodes of the \code{mesh}.
+#' This parameter can be \code{NULL}. In this case,if also the incidence matrix is \code{NULL} the spatial coordinates are assumed to coincide with the nodes of the \code{mesh}.
 #' @param time_locations A vector containing the times of the corresponding observations in the vector \code{observations}.
 #'
-#' @param observations A vector of length #observations with the observed data values over the spatio-temporal domain.
+#' @param observations A matrix of #locations x #time_locations with the observed data values over the spatio-temporal domain.
 #' The spatial locations of the observations can be specified with the \code{locations} argument.
 #'
 #' @param FEMbasis A \code{FEMbasis} object describing the Finite Element basis, as created by \code{\link{create.FEM.basis}}.
@@ -35,7 +41,7 @@
 #'  \code{BC_values}, a vector with the values that the spatial field must take at the nodes indicated in \code{BC_indices}.
 #' @param FLAG_MASS Boolean. This parameter is considerd only for separable problems i.e. when \code{FLAG_PARABOLIC==FALSE}. If \code{TRUE} the mass matrix in space and in time are used, if \code{FALSE} they are substituted with proper identity matrices.
 #' @param FLAG_PARABOLIC Boolean. If \code{TRUE} the parabolic problem problem is selected, if \code{FALSE} the separable one.
-#' @param Initial condition needed in case of parabolic problem i.e. when \code{FLAG_PARABOLIC==FALSE}.This parameter has to be set only for parabolic. If \code{FLAG_PARABOLIC=TRUE} and \code{IC=NULL} it is necessary to provide
+#' @param IC Initial condition needed in case of parabolic problem i.e. when \code{FLAG_PARABOLIC==FALSE}.This parameter has to be set only for parabolic. If \code{FLAG_PARABOLIC=TRUE} and \code{IC=NULL} it is necessary to provide
 #' also data at the initial time. IC will be estimated from it
 #' @param GCV Boolean. If \code{TRUE} the following quantities are computed: the trace of the smoothing matrix, the estimated error standard deviation,  and
 #'        the Generalized Cross Validation criterion, for each combination of the smoothing parameters specified in \code{lambdaS} and \code{lambdaT}.
@@ -52,10 +58,12 @@
 #' \item{\code{edf}}{If GCV is \code{TRUE}, a scalar or matrix with the trace of the smoothing matrix for each combination of the smoothing parameters specified in \code{lambdaS} and \code{lambdaT}.}
 #' \item{\code{stderr}}{If GCV is \code{TRUE}, a scalar or matrix with the estimate of the standard deviation of the error for each combination of the smoothing parameters specified in \code{lambdaS} and \code{lambdaT}.}
 #' \item{\code{GCV}}{If GCV is \code{TRUE}, a  scalar or matrix with the value of the GCV criterion for each combination of the smoothing parameters specified in \code{lambdaS} and \code{lambdaT}.}
+#' \item{\code{bestlambda}}{If GCV is \code{TRUE}, a 2-elements vector with the indices of smoothing parameters returnig the lowest GCV}
+#' \item{\code{ICestimated}}{If FLAG_PARABOLIC is \code{TRUE} and IC is \code{NULL}, a list containing a \code{FEM} object with the initial conditions, the value of the smoothing parameter lambda returning the lowest GCV and, in presence of covariates, the estimated beta coefficients}
 #' @description Space-time regression  with differential regularization. Space-varying covariates can be included in the model. The technique accurately handle data distributed over irregularly shaped domains. Moreover, various conditions can be imposed at the domain boundaries.
 #' @usage smooth.FEM.time(locations = NULL, time_locations=NULL, observations, FEMbasis, time_mesh=NULL, lambdaS, lambdaT = 1, covariates = NULL, PDE_parameters=NULL,
 #'  incidence_matrix = NULL, BC = NULL, FLAG_MASS = FALSE, FLAG_PARABOLIC = FALSE, IC = NULL, GCV = FALSE, GCVmethod = "Stochastic", nrealizations = 100, DOF_matrix=NULL)
-
+#' @export
 
 #' @references Sangalli, L.M., Ramsay, J.O. & Ramsay, T.O., 2013. Spatial spline regression models. Journal of the Royal Statistical Society. Series B: Statistical Methodology, 75(4), pp. 681-703.
 #' @examples
@@ -278,92 +286,3 @@ smooth.FEM.time<-function(locations = NULL, time_locations=NULL, observations, F
 
   return(reslist)
 }
-#
-# getBetaCoefficients<-function(locations, time_locations, observations, fit.FEM, covariates, incidence_matrix = NULL, ndim, mydim)
-# {
-#   loc_nodes = NULL
-#   fnhat = NULL
-#   betahat = NULL
-#
-#   if(!is.null(covariates))
-#   {
-#     if(is.null(locations))
-#     {
-#       loc_nodes = (1:length(observations))[!is.na(observations)]
-#       fnhat = as.matrix(fit.FEM.time$coeff[loc_nodes,])
-#     }else{
-#       loc_nodes = 1:length(observations)
-#       fnhat = eval.FEM.time(FEM.time = fit.FEM.time, locations = cbind(rep(time_locations,each=nrow(locations)),rep(locations[,1],length(time_locations)),rep(locations[,2],length(time_locations))), incidence_matrix = incidence_matrix)
-#     }
-#     ## #row number of covariates, #col number of functions
-#     betahat = matrix(0, nrow = ncol(covariates), ncol = ncol(fnhat))
-#     for(i in 1:ncol(fnhat))
-#       betahat[,i] = as.vector(lm.fit(covariates,as.vector(observations-fnhat[,i]))$coefficients)
-#   }
-#
-#   return(betahat)
-# }
-#
-#
-# getGCV<-function(locations, time_locations, observations, fit.FEM.time, covariates = NULL, incidence_matrix = NULL, edf, ndim, mydim)
-# {
-#   loc_nodes = NULL
-#   fnhat = NULL
-#
-#   edf = as.matrix(edf)
-#
-#   # if(time_locations==NULL)
-#   #   time_locations <- fit.FEM.time$mesh_time
-#
-#   if(is.null(locations) && is.null(incidence_matrix))
-#   {
-#     loc_nodes = (1:length(observations))#[!is.na(observations)]
-#     #fnhat = as.matrix(fit.FEM.time$coeff[loc_nodes,])
-#     locations=fit.FEM.time$FEMbasis$mesh$nodes[which(fit.FEM.time$FEMbasis$mesh$nodesmarkers==0),]
-#     fnhat = eval.FEM.time(FEM.time = fit.FEM.time, locations = cbind(rep(time_locations,each=nrow(locations)),rep(locations[,1],length(time_locations)),rep(locations[,2],length(time_locations))), incidence_matrix = incidence_matrix)
-#
-#   }else
-#   {
-#     loc_nodes = 1:length(observations)
-#     fnhat = eval.FEM.time(FEM.time = fit.FEM.time, locations = cbind(rep(time_locations,each=nrow(locations)),rep(locations[,1],length(time_locations)),rep(locations[,2],length(time_locations))), incidence_matrix = incidence_matrix)
-#   }
-#
-#   zhat = NULL
-#   zhat = matrix(nrow = length(loc_nodes), ncol = length(edf))
-#   if(!is.null(covariates))
-#   {
-#     desmatprod = ( solve( t(covariates) %*% covariates ) ) %*% t(covariates)
-#     for ( i in 1:length(edf))
-#     {
-#       betahat  = desmatprod %*% (observations-fnhat[,i])
-#       zhat[,i] = covariates %*% betahat + fnhat[,i]
-#     }
-#   }else{
-#     zhat = fnhat
-#   }
-#
-#   np = length(loc_nodes)
-#
-#   stderr2 = numeric(length(edf))
-#   GCV = numeric(length(edf))
-#
-#   zhat <- as.matrix(zhat)
-#
-#   if(any(np - edf <= 0))
-#   {
-#     warning("Some values of 'edf' are inconstistent. This might be due to ill-conditioning of the linear system. Try increasing value of 'lambda'.")
-#   }
-#
-#   for (i in 1:length(edf))
-#   {
-#     stderr2[i] = t(observations[loc_nodes] - zhat[,i]) %*% (observations[loc_nodes] - zhat[,i]) / ( np - edf[i] )
-#     GCV[i] = ( np / ( np - edf[i] )) * stderr2[i]
-#   }
-#
-#   # NA if stderr2 is negative
-#   stderr = vector('numeric', length(stderr2));
-#   stderr[stderr2>=0] = sqrt(stderr2[stderr2>=0]);
-#   stderr[stderr2<0] = NaN;
-#
-#   return(list(stderr = stderr, GCV = GCV))
-# }

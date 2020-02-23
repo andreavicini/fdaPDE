@@ -4,18 +4,23 @@
 \alias{FPCA.FEM}
 \title{Smooth Functional Principal Component Analysis}
 \usage{
-FPCA.FEM(locations = NULL, datamatrix, FEMbasis, lambda, nPC=1, validation=NULL,NFolds=5,GCVmethod = "Stochastic", nrealizations = 100)
+FPCA.FEM(locations = NULL, datamatrix, FEMbasis, lambda, nPC=1, 
+         validation = NULL, NFolds = 5, GCVmethod = "Stochastic", nrealizations = 100)
 }
 \arguments{
-\item{locations}{A #observations-by-ndim matrix where each row specifies the spatial coordinates \code{x} and \code{y} (and \code{z} if ndim=3) of the corresponding column of observations in the matrix \code{datamatrix}.
-This parameter can be \code{NULL}. In this case the spatial coordinates of the corresponding observations are assigned as specified in \code{datamatrix}.}
+\item{locations}{A #observations-by-2 matrix in the 2D case and #observations-by-3 matrix in the 2.5D and 3D case, where 
+each row specifies the spatial coordinates \code{x} and \code{y} (and \code{z} in 2.5D and 3D) of the corresponding 
+observation in the \code{datamatrix}. 
+If the locations of the observations coincide with (or are a subset of) the nodes of the mesh in the \code{FEMbasis}, 
+leave the parameter \code{locations = NULL} for a faster implementation.}
 
-\item{datamatrix}{A matrix of dimensions #samples-by-#points(or #observations) with the observed data values over the domain for each sample. 
-The locations of the observations can be specified with the \code{locations} argument.
-The datamatrix needs to have zero mean.
-Otherwise if only the datamatrix is given, these are considered to be located in the corresponding node in the table
-\code{nodes} of the mesh. In this last case, a column with \code{NA} value in the \code{datamatrix} indicates that there is no observation associated to the corresponding
- node.}
+\item{datamatrix}{A matrix of dimensions #samples-by-#locations with the observed data values over the domain 
+for each sample. The datamatrix needs to have zero mean. 
+If the \code{locations} argument is left \code{NULL} the datamatrix has to be dimensions #samples-by-#nodes where #nodes
+is the number of nodes of the mesh in the FEMbasis. In this case, each observation is associated to the corresponding 
+node in the mesh. 
+If the data are observed only on a subset of the mesh nodes, fill with \code{NA} the values of the 
+\code{datamatrix} in correspondence of unobserved data.}
 
 \item{FEMbasis}{A \code{FEMbasis} object describing the Finite Element basis, as created by \code{\link{create.FEM.basis}}.}
 
@@ -23,59 +28,74 @@ Otherwise if only the datamatrix is given, these are considered to be located in
 
 \item{nPC}{An integer specifying the number of Principal Components to compute.}
 
-\item{validation}{String. If \code{lambda} is a vector, it has to be specified as \code{"GCV"} or \code{"KFold"}. This parameter specify which method of cross-validation is used to select the best parameter \code{lambda} among those values of the smoothing parameter specified in \code{lambda} for each Principal Component.}
+\item{validation}{A string specifying the type of validation to perform. If \code{lambda} is a vector, it has to 
+be specified as \code{"GCV"} or \code{"KFold"}. This parameter specify which method of cross-validation is used 
+to select the best parameter \code{lambda} among those values of the smoothing parameter specified in \code{lambda} 
+for each Principal Component.}
 
-\item{NFolds}{An integer specifying the number of folds to use if the KFold cross-validation method for the selection of the best parameter \code{lambda} is chosen. Default value is 5.}
+\item{NFolds}{This parameter is used only in case \code{validation = "KFold"}. It is an integer specifying 
+the number of folds to use if the KFold cross-validation method for the 
+selection of the best parameter \code{lambda} is chosen. Default value is 5.}
 
-\item{GCVmethod}{If set to "Exact" perform an exact (but possibly slow) computation of the GCV index. If set to "Stochastic" approximate the GCV with a stochastic algorithm.}
+\item{GCVmethod}{This parameter is considered only when \code{validation = "GCV"}. It can be either "Exact" or 
+"Stochastic". If set to "Exact" the algoritm performs an exact (but possibly slow) computation 
+of the GCV index. If set to "Stochastic" the GCV is approximated by a stochastic algorithm.}
 
 \item{nrealizations}{The number of realizations to be used in the stochastic algorithm for the estimation of GCV.}
 }
 \value{
 A list with the following variables:
-\item{\code{loadings.FEM}}{A \code{FEM} object that represents the normalized functional loadings for each Principal Component computed.}
+\itemize{
+\item{\code{loadings.FEM}}{A \code{FEM} object that represents the L^2-normalized functional loadings for each 
+Principal Component computed.}
 \item{\code{scores}}{A #samples-by-#PrincipalComponents matrix that represents the unnormalized scores or PC vectors.}
-\item{\code{lambda}}{A vector of length #PrincipalComponents where each value is \code{lambda} chosen for that Principal Component.}
+\item{\code{lambda}}{A vector of length #PrincipalComponents with the values of the smoothing parameter \code{lambda} 
+chosen for that Principal Component.}
 \item{\code{variance_explained}}{A vector of length #PrincipalComponents where each value represent the variance explained by that component.}
-\item{\code{ cumsum_percentage}}{A vector of length #PrincipalComponents containing the cumulative percentage of the variance explained by the first components.}
+\item{\code{cumsum_percentage}}{A vector of length #PrincipalComponents containing the cumulative percentage of the variance explained by the first components.}
+}
 }
 \description{
-This function implements a smooth functional principal component analysis over a planar mesh, a smooth manifold or a volume. In order to perform some regularization, the calculation involves the Laplacian of the spatial field. The computation relies only on the C++ implementation of the algorithm.
+This function implements a smooth functional principal component analysis over a planar mesh, 
+a smooth manifold or a volume.
 }
 \examples{
 library(fdaPDE)
+
 ## Load the hub data
-data(hub)
-## Plot the mesh
-plot(hub)
+data(hub2.5D)
+mesh = create.mesh.2.5D(nodes = hub2.5D.nodes, triangles = hub2.5D.triangles)
 ## Create the Finite Element basis 
-FEMbasis = create.FEM.basis(hub)
+FEMbasis = create.FEM.basis(mesh)
 ## Create a datamatrix
-datamatrix<-NULL;
+datamatrix = NULL
 for(ii in 1:50){
-a1 = rnorm(1,mean = 1, sd = 1)
-a2 = rnorm(1,mean = 1, sd = 1)
-a3 = rnorm(1,mean = 1, sd = 1)
-
-func_evaluation = numeric(nnodes)
-for (i in 0:(nnodes-1)){
- func_evaluation[i+1] = a1* sin(2*pi*hub$nodes[i+1,1]) +  a2* sin(2*pi*hub$nodes[i+1,2]) +  a3*sin(2*pi*hub$nodes[i+1,3]) +1
+  a1 = rnorm(1, mean = 1, sd = 1)
+  a2 = rnorm(1, mean = 1, sd = 1)
+  a3 = rnorm(1, mean = 1, sd = 1)
+  
+  func_evaluation = numeric(mesh$nnodes)
+  for (i in 0:(mesh$nnodes-1)){
+    func_evaluation[i+1] = a1* sin(2*pi*mesh$nodes[i+1,1]) +  a2* sin(2*pi*mesh$nodes[i+1,2]) +  a3*sin(2*pi*mesh$nodes[i+1,3]) +1
+  }
+  data = func_evaluation + rnorm(mesh$nnodes, mean = 0, sd = 0.5)
+  datamatrix = rbind(datamatrix, data)
 }
-data=func_evaluation+rnorm(nnodes,mean=0,sd=0.5)
-datamatrix<-rbind(datamatrix,data)
-}
-## Compute the mean of the datamatrix and subtract it
+## Compute the mean of the datamatrix and subtract it to the data
+data_bar = colMeans(datamatrix)
+data_demean = matrix(rep(data_bar,50), nrow=50, byrow=TRUE)
 
-datamatrix_demeaned=datamatrix-data_demean
-##Fix the parameter lambda
-lambda=c(0.00375)
+datamatrix_demeaned = datamatrix - data_demean
+## Set the smoothing parameter lambda
+lambda = 0.00375
 ## Estimate the first 2 Principal Components
-output_CPP =smooth.FEM.FPCA(datamatrix = datamatrix_demeaned,
-                           FEMbasis = FEMbasis, lambda = lambda,nPC=2)
+FPCA_solution = FPCA.FEM(datamatrix = datamatrix_demeaned, 
+                      FEMbasis = FEMbasis, lambda = lambda, nPC = 2)
 
 ## Plot the functional loadings of the estimated Principal Components                           
-plot(output_CPP$loadings.FEM)
+plot(FPCA_solution$loadings.FEM)
 }
 \references{
-Sangalli, L.M., Ramsay, J.O. & Ramsay, T.O., 2013. Spatial spline regression models. Journal of the Royal Statistical Society. Series B: Statistical Methodology, 75(4), pp. 681-703.
+Lila, E., Aston, J.A.D.,  Sangalli, L.M., 2016a. Smooth Principal Component Analysis over two-dimensional 
+manifolds with an application to neuroimaging. Ann. Appl. Stat., 10(4), pp. 1854-1879.
 }

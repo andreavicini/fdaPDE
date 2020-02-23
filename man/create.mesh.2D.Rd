@@ -38,12 +38,11 @@ Default is \code{verbosity} = 0.}
 }
 \value{
 An object of the class mesh.2D with the following output:
+\itemize{
 \item{\code{nodes}}{A #nodes-by-2 matrix containing the x and y coordinates of the mesh nodes.}
 \item{\code{nodesmarkers}}{A vector of length #nodes, with entries either '1' or '0'. An entry '1' indicates that the corresponding node is a boundary node; an entry '0' indicates that the corresponding node is not a boundary node.}
-\item{\code{nodesattributes}}{nodesattributes A matrix with #nodes rows containing nodes' attributes. 
-These are passed unchanged to the output. If a node is added during the triangulation process or mesh refinement, its attributes are computed  
-by linear interpolation using the attributes of neighboring nodes. This functionality is for instance used to compute the value 
-of a Dirichlet boundary condition at boundary nodes added during the triangulation process.}
+\item{\code{nodesattributes}}{A matrix with #nodes rows containing nodes' attributes. 
+These are passed unchanged from the input.}
 \item{\code{triangles}}{A #triangles-by-3 (when \code{order} = 1) or #triangles-by-6 (when \code{order} = 2) matrix.
 This option is used when a triangulation is already available. It specifies the triangles giving the indices in \code{nodes} of the triangles' vertices and (when \code{nodes} = 2) also if the triangles' edges midpoints. The triangles' vertices and midpoints are ordered as described 
 at  \cr https://www.cs.cmu.edu/~quake/triangle.highorder.html.}
@@ -57,30 +56,36 @@ one edge of the triangle is a boundary edge.}
 \item{\code{holes}}{A #holes-by-2 matrix containing the x and y coordinates of a point internal to each hole of the mesh. These points are used to carve holes
 in the triangulation, when the domain has holes.}
 \item{\code{order}}{Either '1' or '2'. It specifies wether each mesh triangle should be represented by 3 nodes (the triangle' vertices) or by 6 nodes (the triangle's vertices and midpoints). 
-These are respectively used for linear (order = 1) and quadratic (order = 2) Finite Elements. Default is \code{order} = 1.}
+These are respectively used for linear (order = 1) and quadratic (order = 2) Finite Elements.}
+}
 }
 \description{
 This function is a wrapper of the Triangle library (http://www.cs.cmu.edu/~quake/triangle.html). It can be used
 to create a triangulation of the domain of interest starting from a list of points, to be used as triangles' vertices, and a list of segments, that define the domain boundary. The resulting
 mesh is a Constrained Delaunay triangulation. This is constructed in a way to preserve segments provided in the input \code{segments} without splitting them. This imput can be used to define the boundaries
 of the domain. If this imput is NULL, it generates a triangulation over the
-convex hull of the points.
+convex hull of the points. 
+It is also possible to create a mesh.2D from the nodes locations and the connectivity matrix.
 }
 \examples{
-## Upload the Meuse data
-data(MeuseData)
-## Create a triangulation on the convex hull of these data,
-## where each data location is a triangle vertex
-mesh <- create.mesh.2D(nodes = MeuseData[,c(2,3)], order = 1)
-## Plot the mesh
+library(fdaPDE)
+
+## Upload the quasicirle2D data
+data(quasicircle2D)
+
+## Create mesh from boundary
+## if the domain is convex it is sufficient to call:
+mesh = create.mesh.2D(nodes = rbind(boundary_nodes, locations))
 plot(mesh)
-## Upload a domain boundary for these data
-data(MeuseBorder)
-## Create a constrained Delaunay triangulation with the provided boundary 
-## where each datalocation is a triangle vertex
-mesh <- create.mesh.2D(nodes = MeuseData[,c(2,3)], segments = MeuseBorder, order = 1)
-## Plot the mesh
+
+## if the domain is not convex, pass in addition the segments the compose the boundary:
+mesh = create.mesh.2D(nodes = rbind(boundary_nodes, locations), segments = boundary_segments)
+
+## Create mesh from data locations (without knowing the boundary)
+mesh = create.mesh.2D(nodes = locations)
 plot(mesh)
+## In this case the domain is the convex hull of the data locations. 
+## Do this only if you do not have any information about the shape of the domain of interest.  
 }
 \seealso{
 \code{\link{refine.mesh.2D}}, \code{\link{create.FEM.basis}}

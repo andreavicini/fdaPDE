@@ -84,6 +84,7 @@ RegressionData::RegressionData(SEXP Rlocations, SEXP Robservations, SEXP Rorder,
 	setObservations(Robservations);
 	setCovariates(Rcovariates);
 	setNrealizations(Rnrealizations);
+	setDOF_matrix(RDOF_matrix);
 
 	GCVmethod_ = INTEGER(RGCVmethod)[0];
 

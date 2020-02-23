@@ -10,33 +10,45 @@ create.FEM.basis(mesh)
 \item{mesh}{A \code{mesh.2D}, \code{mesh.2.5D} or \code{mesh.3D} object representing the domain triangulation. See \link{create.mesh.2D}, \link{create.mesh.2.5D}, \link{create.mesh.3D}.}
 }
 \value{
-A  \code{FEMbasis} object. This contains the \code{mesh}, along with some additional quantities:
-
-if \code{class(mesh) == mesh.2D}
-	\item{\code{order}}{Either "1" or "2". Order of the Finite Element basis.} 
-	\item{\code{nbasis}}{Scalar. The number of basis.} 
-	\item{\code{transf_coord}}{An object containing 4 vectors of length #triangles. The for of them encode the tranformation matrix [diff1x diff2x; diff1y diff2y] that transforms the nodes of the reference triangle to the nodes of the i-th triangle.}
-	\item{\code{detJ}}{A vector of length #triangles. The ith element contains the determinant of the transformation from the reference triangle to the nodes of the i-th triangle. It's values is also the double of the area of each triangle of the basis.}
-if \code{class(mesh) == mesh.2.5D}
-	\item{\code{order}}{Either "1" or "2". Order of the Finite Element basis.}
+A \code{FEMbasis} object. This contains the \code{mesh}, along with some additional quantities:
+\itemize{
+	\item{\code{order}}{Either "1" or "2" for the 2D and 2.5D case, and "1" for the 3D case.
+	Order of the Finite Element basis.}
 	\item{\code{nbasis}}{Scalar. The number of basis.}
-if \code{class(mesh) == mesh.3D}
-	\item{\code{order}}{"1". Order of the Finite Element basis.}
-	\item{\code{nbasis}}{Scalar. The number of basis.}
+	\item{\code{transf_coord}}{It takes value only in the 2D case. It is a list of 4 vectors: diff1x, diff1y, diff2x and diff2y.
+	Each vector has length #triangles and encodes the information for the tranformation matrix that transforms the
+	nodes of the reference triangle to the nodes of the i-th triangle.
+	The tranformation matrix for the i-th triangle has the form [diff1x[i] diff2x[i]; diff1y[i] diff2y[i]].}
+	\item{\code{detJ}}{It takes value only in the 2D case. A vector of length #triangles. The ith element contains
+	the determinant of the transformation from the reference triangle to the nodes of the i-th triangle.
+	Its value is also the double of the area of each triangle of the basis.}
+}
 }
 \description{
-Sets up a Finite Element basis. It requires a triangular mesh, a \code{mesh.2D}, \code{mesh.2.5D} or \code{mesh.3D} object, as input. 
-The basis' functions are globally continuos surfaces, that are polynomials once restricted to a triangle in the mesh. 
-Linear if (\code{order = 1}) in the input \code{mesh} and quadratic if (\code{order = 2}) in the input \code{mesh}
-Finite Element are currently implemented.
+Sets up a Finite Element basis. It requires a \code{mesh.2D}, \code{mesh.2.5D} or \code{mesh.3D} object,
+as input.
+The basis' functions are globally continuos functions, that are polynomials once restricted to a triangle in the mesh.
+The current implementation includes linear finite elements (when \code{order = 1} in the input \code{mesh}) and
+quadratic finite elements (when \code{order = 2} in the input \code{mesh}).
 }
 \examples{
-## Creates a simple triangulated domain with a concavity; this is a mesh.2D object  
-mesh<-create.mesh.2D(nodes=rbind(c(0, 0), c(0, 1), c(0.5, 0.5), c(1, 1), c(1, 0)),
-segments=rbind(c(1, 2), c(2, 3), c(3, 4), c(4, 5), c(5, 1)), order=1)
+## Upload the quasicircle2D data
+data(quasicircle2D)
+
+## Create the 2D mesh
+mesh = create.mesh.2D(nodes = rbind(boundary_nodes, locations), segments = boundary_segments)
 ## Plot it
-plot(mesh)                   
-## Creates the basis
+plot(mesh)
+## Create the basis
+FEMbasis = create.FEM.basis(mesh)
+## Upload the hub2.5D data
+data(hub2.5D)
+
+## Create the 2.5D mesh
+mesh = create.mesh.2.5D(nodes = hub2.5D.nodes, triangles = hub2.5D.triangles)
+## Plot it
+plot(mesh)
+## Create the basis
 FEMbasis = create.FEM.basis(mesh)
 }
 \seealso{
