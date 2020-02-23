@@ -7,9 +7,9 @@
 FEM(coeff,FEMbasis)
 }
 \arguments{
-\item{coeff}{A vector or a matrix containing the coefficients for the Finite Element basis expansion. The number of rows 
-(or the vector's length) corresponds to the number of basis in \code{FEMbasis}. 
-The number of columns corresponds to the number of functional replicates.}
+\item{coeff}{A vector or a matrix containing the coefficients for the Finite Element basis expansion. The number of rows
+(or the vector's length) corresponds to the number of basis in \code{FEMbasis}.
+The number of columns corresponds to the number of functions.}
 
 \item{FEMbasis}{A \code{FEMbasis} object defining the Finite Element basis, created by \link{create.FEM.basis}.}
 }
@@ -17,16 +17,22 @@ The number of columns corresponds to the number of functional replicates.}
 An \code{FEM} object. This contains a list with components \code{coeff} and \code{FEMbasis}.
 }
 \description{
-This function defines a FEM object. This is not usualled called directly by users.
+This function defines a FEM object.
 }
 \examples{
-## Upload a triangular mesh and plot it
-data("mesh.2D.rectangular")
-plot(mesh.2D.rectangular)
-## Create a linear Finite Element basis
-FEMbasis = create.FEM.basis(mesh.2D.rectangular)
-## Define a sinusoidal function as expansion of this basis and plot it
-coeff <- sin(mesh.2D.rectangular$nodes[,1])*cos(mesh.2D.rectangular$nodes[,2])
-FEM_object<- FEM(coeff, FEMbasis)
-plot(FEM_object)
+library(fdaPDE)
+## Upload the horseshoe2D data
+data(horseshoe2D)
+
+## Create the 2D mesh
+mesh = create.mesh.2D(nodes = rbind(boundary_nodes, locations), segments = boundary_segments)
+## Create the FEM basis
+FEMbasis = create.FEM.basis(mesh)
+## Compute the coeff vector evaluating the desired function at the mesh nodes
+## In this case we consider the fs.test() function introduced by Wood et al. 2008
+coeff = fs.test(mesh$nodes[,1], mesh$nodes[,2], exclude = FALSE)
+## Create the FEM object
+FEMfunction = FEM(coeff, FEMbasis)
+## Plot it
+plot(FEMfunction)
 }

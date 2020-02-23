@@ -117,6 +117,35 @@ FEM<-function(coeff,FEMbasis)
   return(fclass)
 }
 
+#' Define a spatio-temporal field by a Finite Element basis expansion
+#'
+#' @param coeff A vector or a matrix containing the coefficients for the spatio-temporal basis expansion. The number of rows
+#' (or the vector's length) corresponds to the number of basis in \code{FEMbasis} times the number of knots in \code{time_mesh}.
+#' @param FEMbasis A \code{FEMbasis} object defining the Finite Element basis, created by \link{create.FEM.basis}.
+#' @param time_mesh A vector containing the b-splines knots for separable smoothing and the nodes for finite differences for parabolic smoothing
+#' @param FLAG_PARABOLIC Boolean. If \code{TRUE} the coefficients are from parabolic smoothing, if \code{FALSE} the separable one.
+#' @description This function defines a FEM.time object.
+#' @usage FEM.time(coeff,mesh_time,FEMbasis,FLAG_PARABOLIC=FALSE)
+#' @return An \code{FEM.time} object. This contains a list with components \code{coeff}, \code{mesh_time}, \code{FEMbasis} and \code(FLAG_PARABOLIC).
+#' @examples
+#' library(fdaPDE)
+#' ## Upload the horseshoe2D data
+#' data(horseshoe2D)
+#'
+#' ## Create the 2D mesh
+#' mesh = create.mesh.2D(nodes = rbind(boundary_nodes, locations), segments = boundary_segments)
+#' ## Create the FEM basis
+#' FEMbasis = create.FEM.basis(mesh)
+#' ## Compute the coeff vector evaluating the desired function at the mesh nodes
+#' ## In this case we consider the fs.test() function introduced by Wood et al. 2008
+#' coeff = rep(fs.test(mesh$nodes[,1], mesh$nodes[,2], exclude = FALSE),5)
+#' time_mesh = seq(0,1,5)
+#' ## Create the FEM object
+#' FEMfunction = FEM(coeff,time_mesh, FEMbasis,FLAG_PARABOLIC=T)
+#' ## Plot it at desired time
+#' plot(FEMfunction,0.7)
+#' @export
+
 FEM.time<-function(coeff,time_mesh,FEMbasis,FLAG_PARABOLIC=FALSE)
 {
   M = ifelse(FLAG_PARABOLIC,length(time_mesh),length(time_mesh)+2)

@@ -15,13 +15,19 @@ Author: Eardi Lila [aut, cre],
     Jim Ramsay [aut],
     Luca Formaggia [aut]
 Maintainer: Eardi Lila <el425@cam.ac.uk>
-Depends: 
+Depends:
     R (>= 3.0.0),
-    stats, grDevices, graphics, geometry,
-    rgl, Matrix, plot3D, plot3Drgl
-LinkingTo: 
+    geometry,
+    rgl,
+		Matrix,
+		plot3D,
+		plot3Drgl
+Imports:
+		grDevices,
+		graphics
+LinkingTo:
 	RcppEigen
-Suggests: 
+Suggests:
     MASS,
     testthat
 Description: An implementation of regression models with partial differential regularizations, making use of the Finite Element Method. The models efficiently handle data distributed over irregularly shaped domains and can comply with various conditions at the boundaries of the domain. A priori information about the spatial structure of the phenomenon under study can be incorporated in the model via the differential regularization.
@@ -29,4 +35,5 @@ License: CC BY-NC-SA 4.0
 Copyright: See the individual source files for copyrights information
 NeedsCompilation: yes
 SystemRequirements: C++11
+Encoding: UTF-8
 RoxygenNote: 7.0.2

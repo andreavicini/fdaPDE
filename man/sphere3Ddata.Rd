@@ -9,5 +9,5 @@ A dataset with information about the connectivity matrix and the nodes locations
 	\item nodes. A #nodes-by-3 matrix specifying the locations of each node.
 	\item tetrahedrons. A #tetrahedrons-by-4 matrix specifying the indices of the nodes in each tetrahedron.
    }
-This dataset is used to create a \code{MESH.3D} object with the function \code{create.MESH.3D}
+This dataset can be used to create a \code{MESH.3D} object with the function \code{create.MESH.3D}
 }

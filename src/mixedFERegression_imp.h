@@ -83,8 +83,8 @@ void MixedFERegressionBase<InputHandler,IntegratorSpace,ORDER, IntegratorTime, S
 		}
 		else
 		{
-			psi_.resize(nnodes,nnodes);
-			psi_.setIdentity();
+			for(UInt i=0; i<nlocations; i++)
+				psi_.coeffRef(i,i)=1;
 		}
 	}
 	else if (regressionData_.getNumberOfRegions() == 0)
@@ -202,32 +202,7 @@ void MixedFERegressionBase<InputHandler,IntegratorSpace,ORDER, IntegratorTime, S
 	matrixNoCov_.resize(2*nnodes,2*nnodes);
 	matrixNoCov_.setFromTriplets(tripletAll.begin(),tripletAll.end());
 	matrixNoCov_.makeCompressed();
-	//std::cout<<"Coefficients' Matrix Set Correctly"<<std::endl;
 }
-
-//template<typename InputHandler, typename Integrator, UInt ORDER, UInt mydim, UInt ndim>
-//void MixedFERegressionBase<InputHandler,Integrator,ORDER, mydim, ndim>::buildMatrixOnlyCov(const SpMat& Psi,  const MatrixXr& H) {
-//
-//	UInt nnodes=mesh_.num_nodes();
-//
-//	MatrixXr NWblock= MatrixXr::Zero(2*nnodes,2*nnodes);
-//
-//	if(regressionData_.getNumberOfRegions()==0)
-//    	NWblock.topLeftCorner(nnodes,nnodes)=Psi.transpose()*(-H)*Psi;
-//    else
-//	    NWblock.topLeftCorner(nnodes,nnodes)=Psi.transpose()*A_.asDiagonal()*(-H)*Psi;
-//
-////    matrixOnlyCov_.setZero();
-////    matrixOnlyCov_.resize(2*nnodes,2*nnodes);
-//
-//    matrixOnlyCov_=NWblock.sparseView();
-////    for(int i=0; i<nnodes; ++i)
-////     for(int j=0; j<nnodes; ++j)
-////       matrixOnlyCov_.coeffRef(i,j)=NWblock(i,j);
-//
-//	matrixOnlyCov_.makeCompressed();
-//}
-//
 
 template<typename InputHandler, typename IntegratorSpace, UInt ORDER, typename IntegratorTime, UInt SPLINE_DEGREE, UInt ORDER_DERIVATIVE, UInt mydim, UInt ndim>
 void MixedFERegressionBase<InputHandler,IntegratorSpace,ORDER, IntegratorTime, SPLINE_DEGREE, ORDER_DERIVATIVE, mydim, ndim>::system_factorize() {
@@ -404,13 +379,10 @@ void MixedFERegressionBase<InputHandler,IntegratorSpace,ORDER, IntegratorTime, S
 	// Case 1: MUMPS
 	if (regressionData_.isLocationsByNodes() && regressionData_.getCovariates().rows() == 0 && (!regressionData_.isSpaceTime()||regressionData_.getFlagParabolic()))
 	{
+		UInt nlocations = regressionData_.getObservationsIndices().size();
 		auto k = regressionData_.getObservationsIndices();
 		DMUMPS_STRUC_C id;
-		//int myid, ierr;
-        //int argc=0;
-        //char ** argv= NULL;
-        //MPI_Init(&argc,&argv);
-		//ierr = MPI_Comm_rank(MPI_COMM_WORLD, &myid);
+
 
 		id.sym=2;
 		id.par=1;
@@ -425,19 +397,18 @@ void MixedFERegressionBase<InputHandler,IntegratorSpace,ORDER, IntegratorTime, S
 		std::vector<int> irhs_sparse;
 		double* rhs_sparse= (double*)malloc(nlocations*sizeof(double));
 
-		//if( myid==0){
-			id.n=2*nnodes;
-			for (int j=0; j<matrixNoCov_.outerSize(); ++j){
-				for (SpMat::InnerIterator it(matrixNoCov_,j); it; ++it){
-					if(it.col()>it.row())
-					{
-						irn.push_back(it.row()+1);
-						jcn.push_back(it.col()+1);
-						a.push_back(it.value());
-					}
+		id.n=2*nnodes;
+		for (int j=0; j<matrixNoCov_.outerSize(); ++j){
+			for (SpMat::InnerIterator it(matrixNoCov_,j); it; ++it){
+				if(it.col()>=it.row())
+				{
+					irn.push_back(it.row()+1);
+					jcn.push_back(it.col()+1);
+					a.push_back(it.value());
 				}
 			}
-		//}
+		}
+
 		id.nz=irn.size();
 		id.irn=irn.data();
 		id.jcn=jcn.data();
@@ -482,15 +453,112 @@ void MixedFERegressionBase<InputHandler,IntegratorSpace,ORDER, IntegratorTime, S
 		id.job=JOB_END;
 		dmumps_c(&id);
 
-		//if (myid==0){
 			for (int i=0; i< nlocations; ++i){
-				//std::cout << "rhs_sparse" << rhs_sparse[i] << std::endl;
 				degrees+=rhs_sparse[i];
 			}
-		//}
-		free(rhs_sparse);
 
-		//MPI_Finalize();
+		free(rhs_sparse);
+	}
+	else if(regressionData_.isSpaceTime() && regressionData_.getCovariates().rows() == 0) //! Space-time smoothing without covariates
+	{
+		SpMat X;
+		SpMat BBsmall(M_*N_,M_*N_);
+
+		if(regressionData_.getNumberOfRegions()==0)
+			BBsmall = psi_.transpose()*psi_;
+		else
+			BBsmall = psi_.transpose()*A_*psi_;
+
+		SpMat BB(2*M_*N_,2*M_*N_);
+
+		std::vector<coeff> tripletAll;
+		tripletAll.reserve(BBsmall.nonZeros());
+
+		for (int k=0; k<BBsmall.outerSize(); ++k)
+			for (SpMat::InnerIterator it(BBsmall,k); it; ++it)
+			{
+				tripletAll.push_back(coeff(it.row(), it.col(),it.value()));
+			}
+
+		BB.setFromTriplets(tripletAll.begin(),tripletAll.end());
+		BB.makeCompressed();
+
+	//! Use MUMPS to invert only the selected entries of matrixNoCov_
+		std::vector<int> irn;
+		std::vector<int> jcn;
+		std::vector<double> a;
+
+		for (int j=0; j<matrixNoCov_.outerSize(); ++j)
+		{
+			for (SpMat::InnerIterator it(matrixNoCov_,j); it; ++it)
+			{
+				if(it.col()>=it.row())
+				{
+					irn.push_back(it.row()+1);
+					jcn.push_back(it.col()+1);
+					a.push_back(it.value());
+				}
+			}
+		}
+
+		DMUMPS_STRUC_C id;
+
+		UInt nz_rhs = BB.nonZeros();
+		UInt *innerBB = BB.innerIndexPtr();
+		UInt *outerBB = BB.outerIndexPtr();
+
+		UInt irhs_sparse[nz_rhs];
+
+		for(UInt i=0; i<nz_rhs; ++i)
+		{
+			irhs_sparse[i]=innerBB[i]+1;
+		}
+
+		UInt irhs_ptr[BB.cols()+1];
+
+		for(UInt i=0; i<BB.cols()+1; ++i)
+		{
+			irhs_ptr[i]=outerBB[i]+1;
+		}
+
+		Real rhs_sparse[nz_rhs];
+
+		// Initialize a MUMPS instance. Use MPI_COMM_WORLD
+		id.job=JOB_INIT; id.par=1; id.sym=2;id.comm_fortran=USE_COMM_WORLD;
+		dmumps_c(&id);
+
+		//Define the problem on the host
+		id.n = BB.cols(); id.nz = irn.size(); id.irn=irn.data(); id.jcn=jcn.data();
+		id.a = a.data();
+		id.nz_rhs = nz_rhs; id.nrhs = BB.cols();
+		id.rhs_sparse = rhs_sparse;
+		id.irhs_sparse = irhs_sparse;
+		id.irhs_ptr = irhs_ptr;
+
+		#define ICNTL(I) icntl[(I)-1] /* macro s.t. indices match documentation */
+		/* No outputs */
+		id.ICNTL(1)=-1; id.ICNTL(2)=-1; id.ICNTL(3)=-1; id.ICNTL(4)=0;
+		id.ICNTL(14)=1000;
+		id.ICNTL(20)=1; id.ICNTL(30)=1;
+
+		/* Call the MUMPS package. */
+		id.job=6;
+		dmumps_c(&id);
+
+		/* Terminate instance */
+		id.job=JOB_END; dmumps_c(&id);
+
+		SpMat BBPinv = BB;
+
+		Real *valueBBPinv = BBPinv.valuePtr();
+
+		for(UInt i = 0; i < nz_rhs; ++i)
+			valueBBPinv[i] = rhs_sparse[i];
+
+		X = BBPinv*BB;
+		for (int i = 0; i<M_*N_; ++i) {
+			degrees += X.coeff(i,i);
+		}
 	}
 	// Case 2: Eigen
 	else{
@@ -504,33 +572,45 @@ void MixedFERegressionBase<InputHandler,IntegratorSpace,ORDER, IntegratorTime, S
 		if (isRcomputed_ == false)
 		{
 			isRcomputed_ = true;
-			R0dec_.compute(R0_);
+			SpMat R0 = matrixNoCov_.bottomRightCorner(nnodes,nnodes)/lambdaS;
+			R0dec_.compute(R0);
 			if(!regressionData_.isSpaceTime() || !regressionData_.getFlagParabolic())
 			{
-				auto X2 = R0dec_.solve(R1_);
+				MatrixXr X2 = R0dec_.solve(R1_);
 				R_ = R1_.transpose() * X2;
 			}
 		}
+
 		MatrixXr P;
-		if (regressionData_.isSpaceTime())
+		MatrixXr X3=X1;
+
+		if (regressionData_.isSpaceTime() && regressionData_.getFlagParabolic())
 		{
-			if(regressionData_.getFlagParabolic())
-			{
-				SpMat X2 = R1_+lambdaT*LR0k_;
-				P=lambdaS*X2.transpose()*R0dec_.solve(X2);
-			}
-			else
-			{
-				P=lambdaS*R_+lambdaT*Ptk_;
-			}
+			SpMat X2 = R1_+lambdaT*LR0k_;
+			P = lambdaS*X2.transpose()*R0dec_.solve(X2);
 		}
 		else
 		{
-			P=lambdaS*R_;
+			P = lambdaS*R_;
 		}
 
+		if(regressionData_.isSpaceTime() && !regressionData_.getFlagParabolic())
+			X3 += lambdaT*Ptk_;
 
-		MatrixXr X3 = X1 + P;
+		if(regressionData_.getDirichletIndices().size()!=0)
+		{
+			const std::vector<UInt>& bc_indices = regressionData_.getDirichletIndices();
+			UInt nbc_indices = bc_indices.size();
+
+			Real pen=10e20;
+			for(UInt i=0; i<nbc_indices; i++)
+			{
+				UInt id = bc_indices[i];
+				X3(id,id)=pen;
+			}
+		}
+
+		X3 -= P;
 		Eigen::LDLT<MatrixXr> Dsolver(X3);
 
 		auto k = regressionData_.getObservationsIndices();
@@ -562,7 +642,7 @@ void MixedFERegressionBase<InputHandler,IntegratorSpace,ORDER, IntegratorTime, S
 		if (regressionData_.isSpaceTime() || !regressionData_.isLocationsByNodes())
 		{
 			MatrixXr X;
-			X = Dsolver.solve(MatrixXr(X1));
+			X = Dsolver.solve(X1);
 
 			if (regressionData_.getCovariates().rows() != 0) {
 				degrees += regressionData_.getCovariates().cols();
@@ -609,29 +689,6 @@ void MixedFERegressionBase<InputHandler,IntegratorSpace,ORDER, IntegratorTime, S
 
 	// Resolution of the system
 	MatrixXr x = system_solve(b);
-
-//	Eigen::SparseLU<SpMat> solver;
-//
-//	if(!regressionData_.getCovariates().rows()==0){
-//
-//		this->buildMatrixOnlyCov(psi_, H_);
-//
-//		SpMat coeffMatrix_= matrixNoCov_ + matrixOnlyCov_;
-//
-//	    solver.compute(coeffMatrix_); //matrixNoCov_+matrixOnlyCov_ = full system matrix when there are covariates
-//
-//	}
-//	else{
-//		solver.compute(matrixNoCov_);
-//	}
-//
-//	auto x = solver.solve(b);
-//	if(solver.info()!=Eigen::Success)
-//		{
-//			#ifdef R_VERSION_
-//	        Rprintf("Solving system for stoch gcv failed!!!\n");
-//	        #endif
-//		}
 
 	MatrixXr uTpsi = u.transpose()*psi_;
 	VectorXr edf_vect(nrealizations);

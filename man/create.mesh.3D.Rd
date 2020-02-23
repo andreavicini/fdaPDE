@@ -7,34 +7,35 @@
 create.mesh.3D(nodes, tetrahedrons, order = 1)
 }
 \arguments{
-\item{nodes}{A #nodes-by-3 matrix specifying the locations of each node}
+\item{nodes}{A #nodes-by-3 matrix specifying the locations of each node.}
 
-\item{tetrahedrons}{A #tetrahedrons-by-4*order matrix specifying the indices of the nodes in each tetrahedrons}
+\item{tetrahedrons}{A #tetrahedrons-by-4 matrix specifying the indices of the nodes in each tetrahedrons.}
 
-\item{order}{Order of the Finite Element basis default is order = 1. Only order = 1 is possible for the 3D Finite Elements.}
+\item{order}{Order of the Finite Element basis. Only order = 1 is currently implemented.}
 }
 \value{
 An object of the class \code{mesh.3D} with the following output:
-\item{\code{nnodes}}{The #nodes contained in the mesh}
-\item{\code{ntetrahedrons}}{The #tetrahedrons contained in the mesh}
-\item{\code{nodes}}{A #nodes-by-3 matrix containing the x,y and z coordinate for each point of the mesh}
-\item{\code{tetrahedrons}}{A #tetrahedrons-by-4*order matrix specifying the indices of the nodes in each triangle of the mesh}
-\item{\code{order}}{It specifies the order of the Finite Element basis. When order = 1, each mesh tetrahedron is represented by 4 nodes (the tetrahedron vertices). 
-These are respectively used for linear (order = 1) Finite Elements. Currently only \code{order} = 1 is implemented, and is the default option.}
+\itemize{
+\item{\code{nnodes}}{The #nodes in the mesh.}
+\item{\code{ntetrahedrons}}{The #tetrahedrons in the mesh.}
+\item{\code{nodes}}{A #nodes-by-3 matrix containing the x,y and z coordinate for each point of the mesh.}
+\item{\code{tetrahedrons}}{A #tetrahedrons-by-4 matrix specifying the indices of the nodes in each tetrahedron of the mesh.}
+\item{\code{order}}{It specifies the order of the associated Finite Element basis. When order = 1, each 
+mesh tetrahedron is represented by 4 nodes (the tetrahedron vertices).}
+}
 }
 \description{
 Create a \code{mesh.3D} object from the connectivty matrix and nodes locations
 }
 \examples{
-#Load the matrix nodes and tetrahedrons
-
 library(fdaPDE)
+
+##Load the matrix nodes and tetrahedrons
 data(sphere3Ddata)
 
 nodes=sphere3Ddata$nodes
 tetrahedrons=sphere3Ddata$tetrahedrons
 
-#Create the triangulated mesh from the connectivity matrix and nodes locations
+##Create the triangulated mesh from the connectivity matrix and nodes locations
 mesh=create.mesh.3D(nodes,tetrahedrons)
-
 }

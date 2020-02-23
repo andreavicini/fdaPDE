@@ -98,6 +98,7 @@ eval.FEM <- function(FEM, locations=NULL, incidence_matrix = NULL)
 #' @usage eval.FEM.time(FEM.time, locations, incidence_matrix=NULL)
 #' @references
 #'  Devillers, O. et al. 2001. Walking in a Triangulation, Proceedings of the Seventeenth Annual Symposium on Computational Geometry
+#' @export
 
 eval.FEM.time <- function(FEM.time, locations, incidence_matrix = NULL,lambdaS=1,lambdaT=1)
 {
