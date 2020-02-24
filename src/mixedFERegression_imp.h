@@ -70,22 +70,24 @@ void MixedFERegressionBase<InputHandler,IntegratorSpace,ORDER, IntegratorTime, S
 	psi_.resize(nlocations, nnodes);
 	if (regressionData_.isLocationsByNodes()) //pointwise data
 	{
+		std::vector<coeff> tripletAll;
 		if(!regressionData_.isSpaceTime())
 		{
-			std::vector<coeff> tripletAll;
 			auto k = regressionData_.getObservationsIndices();
 			tripletAll.reserve(k.size());
 			for (int i = 0; i< k.size(); ++i){
 				tripletAll.push_back(coeff(i,k[i],1.0));
 			}
-			psi_.setFromTriplets(tripletAll.begin(),tripletAll.end());
-			psi_.makeCompressed();
 		}
 		else
 		{
-			for(UInt i=0; i<nlocations; i++)
-				psi_.coeffRef(i,i)=1;
+			tripletAll.reserve(nlocations);
+			for (int i = 0; i< nlocations; ++i){
+				tripletAll.push_back(coeff(i,i,1.0));
+			}
 		}
+		psi_.setFromTriplets(tripletAll.begin(),tripletAll.end());
+		psi_.makeCompressed();
 	}
 	else if (regressionData_.getNumberOfRegions() == 0)
 	{
