@@ -662,8 +662,9 @@ void MixedFERegressionBase<InputHandler,IntegratorSpace,ORDER, IntegratorTime, S
 	UInt nnodes = N_*M_;
 	UInt nlocations = regressionData_.getNumberofObservations();
 
-	std::random_device rd;
-	std::default_random_engine generator(rd());
+	// std::random_device rd;
+	auto seed = std::chrono::system_clock::now().time_since_epoch().count();
+	std::default_random_engine generator(seed);
 	// Creation of the random matrix
 	std::bernoulli_distribution distribution(0.5);
 	UInt nrealizations = regressionData_.getNrealizations();

@@ -141,7 +141,7 @@ template<typename InputHandler, typename IntegratorSpace, UInt ORDER, typename I
 class MixedFERegression : public MixedFERegressionBase<InputHandler,IntegratorSpace,ORDER,IntegratorTime,SPLINE_DEGREE,ORDER_DERIVATIVE,mydim,ndim>
 {
 public:
-	MixedFERegression(const MeshHandler<ORDER, ndim, mydim>& mesh, const InputHandler& regressionData):
+	MixedFERegression(const MeshHandler<ORDER,mydim,ndim>& mesh, const InputHandler& regressionData):
 			MixedFERegressionBase<InputHandler,IntegratorSpace,ORDER,IntegratorTime,SPLINE_DEGREE,ORDER_DERIVATIVE,mydim,ndim>(mesh, regressionData){};
 	MixedFERegression(const MeshHandler<ORDER,mydim,ndim>& mesh, const std::vector<Real>& mesh_time, const InputHandler& regressionData):
 			MixedFERegressionBase<InputHandler,IntegratorSpace,ORDER,IntegratorTime,SPLINE_DEGREE,ORDER_DERIVATIVE,mydim,ndim>(mesh, mesh_time, regressionData){};

@@ -50,7 +50,7 @@ if(class(FEMobject$FEMbasis$mesh)=="mesh.2D"){
 
 #' Plot a \code{FEM.time} object at a given time
 #'
-#' @param FEMobject A \code{FEM} object.
+#' @param FEMtimeobject A \code{FEM.time} object.
 #' @param t time at which do the plot, may be a vector
 #' @param lambdaS index of the space penalization parameter to use for the plot, useful when \code{FEM.time} returned by \code{smooth.FEM.time} using GCV
 #' @param lambdaT index of the time penalization parameter to use for the plot, useful when \code{FEM.time} returned by \code{smooth.FEM.time} using GCV
