@@ -712,15 +712,12 @@ void MixedFERegressionBase<InputHandler,IntegratorSpace,ORDER, IntegratorTime, S
 template<typename InputHandler, typename IntegratorSpace, UInt ORDER, typename IntegratorTime, UInt SPLINE_DEGREE, UInt ORDER_DERIVATIVE, UInt mydim, UInt ndim>
 void MixedFERegressionBase<InputHandler, IntegratorSpace, ORDER, IntegratorTime, SPLINE_DEGREE, ORDER_DERIVATIVE, mydim, ndim>::buildSpaceTimeMatrices()
 {
-
-	MixedSplineRegression <InputHandler, IntegratorTime, SPLINE_DEGREE, ORDER_DERIVATIVE> Spline(mesh_time_,regressionData_);
-	MixedFDRegression <InputHandler> FiniteDifference(mesh_time_,regressionData_);
-
 	SpMat IM(M_,M_);
 	SpMat phi;
 
 	if(regressionData_.getFlagParabolic()) // Parabolic case
 	{
+		MixedFDRegression <InputHandler> FiniteDifference(mesh_time_,regressionData_);
 		FiniteDifference.setDerOperator();
 		SpMat L = FiniteDifference.getDerOpL(); // Matrix of finite differences
 		IM.setIdentity();
@@ -731,6 +728,7 @@ void MixedFERegressionBase<InputHandler, IntegratorSpace, ORDER, IntegratorTime,
 	}
 	else	// Separable case
 	{
+		MixedSplineRegression <InputHandler, IntegratorTime, SPLINE_DEGREE, ORDER_DERIVATIVE> Spline(mesh_time_,regressionData_);
 		SpMat IN(N_,N_);
 		Spline.setPhi();
 		Spline.setTimeMass();
@@ -786,7 +784,9 @@ void MixedFERegressionBase<InputHandler,IntegratorSpace,ORDER, IntegratorTime, S
 	UInt nnodes = N_*M_;
 	FiniteElement<IntegratorSpace, ORDER, mydim, ndim> fe;
 
-	setA();
+	if(regressionData_.getNumberOfRegions()>0)
+		setA();
+
 	setPsi();
 
 	typedef EOExpr<Mass> ETMass; Mass EMass; ETMass mass(EMass);
