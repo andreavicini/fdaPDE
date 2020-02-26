@@ -80,6 +80,8 @@ CPP_smooth.volume.FEM.time<-function(locations, time_locations, observations, FE
   storage.mode(BC$BC_values)  <- "double"
   GCV <- as.integer(GCV)
   storage.mode(GCV) <-"integer"
+  DOF <- as.integer(DOF)
+  storage.mode(DOF) <- "integer"
 
   FLAG_MASS <- as.integer(FLAG_MASS)
   storage.mode(FLAG_MASS) <-"integer"
@@ -170,7 +172,7 @@ CPP_smooth.volume.FEM.time<-function(locations, time_locations, observations, FE
   ## Call C++ function
   bigsol <- .Call("regression_Laplace_time", locations, time_locations, observations, FEMbasis$mesh, time_mesh, FEMbasis$mesh$order, mydim, ndim, lambdaS, lambdaT, covariates,
                   incidence_matrix, BC$BC_indices, BC$BC_values, FLAG_MASS, FLAG_PARABOLIC,
-                  IC, GCV, GCVMETHOD, nrealizations, package = "fdaPDE")
+                  IC, GCV, GCVMETHOD, nrealizations, DOF, DOF_matrix, package = "fdaPDE")
 
   return(c(bigsol,ICsol))
 }

@@ -1,0 +1,20 @@
+#INSTALL
+
+There are many ways to install this package, but
+not all of them work for Windows users. Here we suggest two that do the job:
+
+1.  Download the .zip folder from GitHub and unzip it on your local PC; then, on the R console, type:
+  install.packages("/path/to/fdaPDE/folder", type=’source’, repos=NULL)
+2.  From the terminal, run:
+  R CMD build <path to folder fdaPDE>
+  R CMD INSTALL -l <path name of the R library tree>
+  <path name of the package to be installed>
+
+In R, using the popular R package devtools, you can install the fdaPDE package and all of its dependencies using the
+command
+install_github("andreavicini/fdaPDE")
+
+Alternatively in unix systems it can be installed by manually creating the compressed package with:
+  tar -czf /path/to/new/compressed/package.tar.gz /path/to/fdaPDE/folder
+and then install it with
+  install.packages("/path/to/new/compressed/package.tar.gz")

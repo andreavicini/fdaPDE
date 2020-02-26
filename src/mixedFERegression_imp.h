@@ -574,6 +574,7 @@ void MixedFERegressionBase<InputHandler,IntegratorSpace,ORDER, IntegratorTime, S
 		if (isRcomputed_ == false)
 		{
 			isRcomputed_ = true;
+			//take R0 from the final matrix since it has already applied the dirichlet boundary conditions
 			SpMat R0 = matrixNoCov_.bottomRightCorner(nnodes,nnodes)/lambdaS;
 			R0dec_.compute(R0);
 			if(!regressionData_.isSpaceTime() || !regressionData_.getFlagParabolic())
@@ -586,6 +587,8 @@ void MixedFERegressionBase<InputHandler,IntegratorSpace,ORDER, IntegratorTime, S
 		MatrixXr P;
 		MatrixXr X3=X1;
 
+		//define the penalization matrix: note that for separable smoothin should be P=lambdaS*Psk+lambdaT*Ptk
+		// but the second term has been added to X1 for dirichlet boundary conditions  
 		if (regressionData_.isSpaceTime() && regressionData_.getFlagParabolic())
 		{
 			SpMat X2 = R1_+lambdaT*LR0k_;
@@ -599,6 +602,7 @@ void MixedFERegressionBase<InputHandler,IntegratorSpace,ORDER, IntegratorTime, S
 		if(regressionData_.isSpaceTime() && !regressionData_.getFlagParabolic())
 			X3 += lambdaT*Ptk_;
 
+		//impose dirichlet boundary conditions if needed
 		if(regressionData_.getDirichletIndices().size()!=0)
 		{
 			const std::vector<UInt>& bc_indices = regressionData_.getDirichletIndices();

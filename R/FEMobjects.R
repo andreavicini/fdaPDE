@@ -126,7 +126,7 @@ FEM<-function(coeff,FEMbasis)
 #' @param FLAG_PARABOLIC Boolean. If \code{TRUE} the coefficients are from parabolic smoothing, if \code{FALSE} the separable one.
 #' @description This function defines a FEM.time object.
 #' @usage FEM.time(coeff,mesh_time,FEMbasis,FLAG_PARABOLIC=FALSE)
-#' @return An \code{FEM.time} object. This contains a list with components \code{coeff}, \code{mesh_time}, \code{FEMbasis} and \code(FLAG_PARABOLIC).
+#' @return A \code{FEM.time} object. This contains a list with components \code{coeff}, \code{mesh_time}, \code{FEMbasis} and \code{FLAG_PARABOLIC}.
 #' @examples
 #' library(fdaPDE)
 #' ## Upload the horseshoe2D data
