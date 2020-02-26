@@ -2,7 +2,7 @@
 #### TEST SCRIPT ###############
 ################################
 
-library(fdaPDE)
+library(fdaPDE,lib.loc = "~/fdaPDEnew/installed/")
 
 ####### 2D ########
 
@@ -934,7 +934,6 @@ abline(h=beta_exact[2], col='red')
 ####### 2.5D #######
 
 #### hub (covariates) ####
-setwd("~/data/")
 
 rm(list=ls())
 
