@@ -100,7 +100,7 @@ plot.FEM.time = function(FEMtimeobject,t,lambdaS=NULL,lambdaT=NULL,num_refinemen
     stop("time provided out of the 'time_mesh'")
   if(is.null(lambdaS) || is.null(lambdaT))
   {
-    if(exists(FEMtimeobject$bestlambda))
+    if(exists("FEMtimeobject$bestlambda"))
     {
       lambdaS = FEMtimeobject$bestlambda[1]
       lambdaT = FEMtimeobject$bestlambda[2]

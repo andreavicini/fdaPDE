@@ -2,7 +2,7 @@
 #### TEST SCRIPT ###############
 ################################
 
-library(fdaPDE,lib.loc = "~/fdaPDEnew/installed/")
+library(fdaPDE)
 
 ####### 2D ########
 
@@ -1006,7 +1006,7 @@ solSep = smooth.FEM.time(locations=nodesLocations,observations = data,time_mesh 
 
 solSepCov = smooth.FEM.time(locations=nodesLocations,observations = datacov,time_mesh = TimeNodes, covariates = W,
                          FEMbasis = FEMbasis, lambdaS = lambdaS, lambdaT = lambdaT, GCV = GCVFLAG, FLAG_MASS = F, FLAG_PARABOLIC =F, nrealizations = 100,
-                         GCVmethod = GCVMETHODFLAG,DOF_matrix = DOF_sepcov)
+                         GCVmethod = GCVMETHODFLAG)
 
 ##########################################PARABOLIC####################################################
 solPar = smooth.FEM.time(locations=nodesLocations,observations = data,time_mesh = TimeNodes,
@@ -1077,20 +1077,20 @@ datacov = matrix(datacov,RDD_groups,length(TimeNodes))
 ###########################SEPARABLE###########################################
 solSep = smooth.FEM.time(observations = data,time_mesh = TimeNodes,incidence_matrix = incidence_matrix,
                         FEMbasis = FEMbasis, lambdaS = lambdaS, lambdaT = lambdaT, GCV = GCVFLAG, FLAG_MASS = F, FLAG_PARABOLIC = F,nrealizations = 100,
-                        GCVmethod = GCVMETHODFLAG,DOF_matrix = DOF_sep)
+                        GCVmethod = GCVMETHODFLAG)
 
 solSep = smooth.FEM.time(observations = datacov,time_mesh = TimeNodes, covariates = W_areal,incidence_matrix = incidence_matrix,
                         FEMbasis = FEMbasis, lambdaS = lambdaS, lambdaT = lambdaT, GCV = GCVFLAG, FLAG_MASS = F, FLAG_PARABOLIC =F, nrealizations = 100,
-                        GCVmethod = GCVMETHODFLAG,DOF_matrix = DOF_sepcov)
+                        GCVmethod = GCVMETHODFLAG)
 
 ##########################################PARABOLIC####################################################
 solPar = smooth.FEM.time(observations = data[,2:length(TimeNodes)],time_mesh = TimeNodes, incidence_matrix = incidence_matrix,
                         FEMbasis = FEMbasis, lambdaS = lambdaS_par, lambdaT = lambdaT_par, GCV = GCVFLAG, FLAG_MASS = F, FLAG_PARABOLIC = T,nrealizations = 100,
-                        IC=func_evaluation[1:mesh$nnodes],GCVmethod = GCVMETHODFLAG,DOF_matrix = DOF_par)
+                        IC=func_evaluation[1:mesh$nnodes],GCVmethod = GCVMETHODFLAG)
 
 solPar = smooth.FEM.time(observations = datacov[,2:length(TimeNodes)],time_mesh = TimeNodes, incidence_matrix = incidence_matrix,covariates = W_areal[(1+RDD_groups):(length(TimeNodes)*RDD_groups),],
                         FEMbasis = FEMbasis, lambdaS = lambdaS_par, lambdaT = lambdaT_par, GCV = GCVFLAG, FLAG_MASS = F, FLAG_PARABOLIC = T, nrealizations = 100,
-                        IC=func_evaluation[1:mesh$nnodes],GCVmethod = GCVMETHODFLAG,DOF_matrix = DOF_parcov)
+                        IC=func_evaluation[1:mesh$nnodes],GCVmethod = GCVMETHODFLAG)
 
 
 
@@ -1190,15 +1190,15 @@ datacov = matrix(datacov,nnodes,length(TimeLocations))
 
 solSep = smooth.FEM.time(locations=nodesLocations,observations = data,time_mesh = TimeLocations,
    FEMbasis = FEMbasis, lambdaS = lambdaS, lambdaT = lambdaT, GCV = GCVFLAG, FLAG_MASS = F, FLAG_PARABOLIC = F,nrealizations = 100,
-   GCVmethod = GCVMETHODFLAG,DOF_matrix = DOF_sep)
+   GCVmethod = GCVMETHODFLAG)
 
 solSepNoNodes = smooth.FEM.time(locations=loc[1:nloc,2:4],observations = data_noloc,time_mesh = timeloc,
    FEMbasis = FEMbasis, lambdaS = lambdaS2, lambdaT = lambdaT2, GCV = GCVFLAG, FLAG_MASS = F, FLAG_PARABOLIC = F,nrealizations = 100,
-   GCVmethod = GCVMETHODFLAG,DOF_matrix = DOF_sep_noloc)
+   GCVmethod = GCVMETHODFLAG)
 
 solSepCov = smooth.FEM.time(locations=nodesLocations,observations = datacov,time_mesh = TimeLocations, covariates = W,
    FEMbasis = FEMbasis, lambdaS = lambdaS, lambdaT = lambdaT, GCV = GCVFLAG, FLAG_MASS = F, FLAG_PARABOLIC =F, nrealizations = 100,
-   GCVmethod = GCVMETHODFLAG,DOF_matrix = DOF_sepcov)
+   GCVmethod = GCVMETHODFLAG)
 
 ##########################################PARABOLIC####################################################
 solPar = smooth.FEM.time(locations=nodesLocations,observations = data,time_mesh = TimeLocations,
@@ -1207,18 +1207,18 @@ solPar = smooth.FEM.time(locations=nodesLocations,observations = data,time_mesh 
 
 solParNoNodes = smooth.FEM.time(locations=loc[1:nloc,2:4],observations = data_noloc,time_mesh = timeloc,
    FEMbasis = FEMbasis, lambdaS = lambdaS_par2, lambdaT = lambdaT_par2, GCV = GCVFLAG, FLAG_MASS = F, FLAG_PARABOLIC = T,nrealizations = 100,
-   GCVmethod = GCVMETHODFLAG,DOF_matrix = DOF_par_noloc)
+   GCVmethod = GCVMETHODFLAG)
 
 solParCov = fdaPDEtime::smooth.FEM.time(locations=nodesLocations,observations = datacov[,2:length(TimeLocations)],time_mesh = TimeLocations, covariates = W[(1+nnodes):(length(TimeLocations)*nnodes),],
    FEMbasis = FEMbasis, lambdaS = lambdaS_par, lambdaT = lambdaT_par, GCV = GCVFLAG, FLAG_MASS = F, FLAG_PARABOLIC = T, nrealizations = 100,
-   IC=func_evaluation[1:nnodes],GCVmethod = GCVMETHODFLAG,DOF_matrix = DOF_parcov)
+   IC=func_evaluation[1:nnodes],GCVmethod = GCVMETHODFLAG)
 
 
 
 
 ####### 3D ########
 
-#### sphere 3D (covariates + locations not at nodes + stochastic GCV) ####
+#### sphere 3D areal (covariates + stochastic GCV) ####
 
 rm(list=ls())
 
@@ -1293,19 +1293,17 @@ GCVMETHODFLAG='Stochastic'
  ###########################SEPARABLE###########################################
  solSep = smooth.FEM.time(observations = data,time_mesh = timeloc,incidence_matrix = incidence_matrix,
                           FEMbasis = FEMbasis, lambdaS = lambdaS, lambdaT = lambdaT, GCV = GCVFLAG, FLAG_MASS = T, FLAG_PARABOLIC = F,nrealizations = 100,
-                          GCVmethod = GCVMETHODFLAG,DOF_matrix = DOF_sep)
+                          GCVmethod = GCVMETHODFLAG)
 
  solSep = smooth.FEM.time(observations = datacov,time_mesh = timeloc,incidence_matrix=incidence_matrix ,covariates = W_areal,
                           FEMbasis = FEMbasis, lambdaS = lambdaS, lambdaT = lambdaT, GCV = GCVFLAG, FLAG_MASS = F, FLAG_PARABOLIC =F, nrealizations = 100,
-                          GCVmethod = GCVMETHODFLAG,DOF_matrix = DOF_sepcov)
+                          GCVmethod = GCVMETHODFLAG)
  
  ##########################################PARABOLIC####################################################
  solPar = smooth.FEM.time(observations = data[,2:length(timeloc)],time_mesh = timeloc,incidence_matrix = incidence_matrix,
                           FEMbasis = FEMbasis, lambdaS = lambdaS_par, lambdaT = lambdaT_par, GCV = GCVFLAG, FLAG_MASS = F, FLAG_PARABOLIC = T,nrealizations = 100,
-                          IC=func_evaluation[1:nnodes],GCVmethod = GCVMETHODFLAG,DOF_matrix = DOF_par)
+                          IC=func_evaluation[1:nnodes],GCVmethod = GCVMETHODFLAG)
 
  solPar = smooth.FEM.time(observations = datacov[,2:length(timeloc)],time_mesh = timeloc, covariates = W_areal[(1+nrow(incidence_matrix)):(length(timeloc)*nrow(incidence_matrix)),],incidence_matrix = incidence_matrix,
                           FEMbasis = FEMbasis, lambdaS = lambdaS_par, lambdaT = lambdaT_par, GCV = GCVFLAG, FLAG_MASS = F, FLAG_PARABOLIC = T, nrealizations = 100,
-                          IC=func_evaluation[1:nnodes],GCVmethod = GCVMETHODFLAG,DOF_matrix = DOF_parcov)
-
-}
+                          IC=func_evaluation[1:nnodes],GCVmethod = GCVMETHODFLAG)
