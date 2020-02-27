@@ -1,8 +1,11 @@
 # fdaPDE_dev
 
-This repository contains the development version of fdaPDE package (future 1.0 version).
+This repository contains the development version of fdaPDE package
 
-New features wrt CRAN: smooth regression for manifold and volumetric domains, also with areal data. Smooth fPCA over 2D, 2.5D and 3D domains, also with areal data.
+New features wrt CRAN: 
+- smooth regression for manifold and volumetric domains, also with areal data for only-space problems
+- smooth regression for manifold and volumetric domains, also with areal data for space-time problems 
+- smooth fPCA over 2D, 2.5D and 3D domains, also with areal data.
 
 smooth.FEM.basis, smooth.PDE.FEM.basis, smooth.FEM.PDE.sv.basis are deprecated, smooth.FEM has to be used in all cases.
 
