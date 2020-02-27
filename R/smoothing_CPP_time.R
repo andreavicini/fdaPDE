@@ -287,7 +287,7 @@ CPP_smooth.FEM.PDE.time<-function(locations, time_locations, observations, FEMba
     storage.mode(lambdaSIC) <- "double"
     ICsol <- .Call("regression_PDE", locations, observations[1:NobsIC],
                   FEMbasis$mesh, FEMbasis$order, mydim, ndim, lambdaSIC,
-                  PDE_param_eval$K, PDE_param_eval$b, PDE_param_eval$c,
+                  PDE_parameters$K, PDE_parameters$b, PDE_parameters$c,
                   covariatesIC, incidence_matrix, BC$BC_indices, BC$BC_values,
                   T, as.integer(1), nrealizations, DOF, DOF_matrix, PACKAGE = "fdaPDE")
 
@@ -298,7 +298,7 @@ CPP_smooth.FEM.PDE.time<-function(locations, time_locations, observations, FEMba
       storage.mode(lambdaSIC) <- "double"
       ICsol <- .Call("regression_PDE", locations, observations[1:NobsIC],
                     FEMbasis$mesh, FEMbasis$order, mydim, ndim, lambdaSIC,
-                    PDE_param_eval$K, PDE_param_eval$b, PDE_param_eval$c,
+                    PDE_parameters$K, PDE_parameters$b, PDE_parameters$c,
                     covariatesIC, incidence_matrix, BC$BC_indices, BC$BC_values,
                     T, as.integer(1), nrealizations, DOF, DOF_matrix, PACKAGE = "fdaPDE")
     }
@@ -311,7 +311,7 @@ CPP_smooth.FEM.PDE.time<-function(locations, time_locations, observations, FEMba
         storage.mode(lambdaSIC) <- "double"
         ICsol <- .Call("regression_PDE", locations, observations[1:NobsIC],
                       FEMbasis$mesh, FEMbasis$order, mydim, ndim, lambdaSIC,
-                      PDE_param_eval$K, PDE_param_eval$b, PDE_param_eval$c,
+                      PDE_parameters$K, PDE_parameters$b, PDE_parameters$c,
                       covariatesIC, incidence_matrix, BC$BC_indices, BC$BC_values,
                       T, as.integer(1), nrealizations, DOF, DOF_matrix, PACKAGE = "fdaPDE")
       }
@@ -345,7 +345,7 @@ CPP_smooth.FEM.PDE.time<-function(locations, time_locations, observations, FEMba
 
   ## Call C++ function
   bigsol <- .Call("regression_PDE_time", locations, time_locations, observations, FEMbasis$mesh, time_mesh, FEMbasis$order,
-                  mydim, ndim, lambdaS, lambdaT,  PDE_param_eval$K, PDE_param_eval$b, PDE_param_eval$c, covariates,
+                  mydim, ndim, lambdaS, lambdaT, PDE_parameters$K, PDE_parameters$b, PDE_parameters$c, covariates,
                   incidence_matrix, BC$BC_indices, BC$BC_values, FLAG_MASS, FLAG_PARABOLIC,
                   IC, GCV, GCVMETHOD, nrealizations, DOF, DOF_matrix, PACKAGE = "fdaPDE")
   return(c(bigsol,ICsol))

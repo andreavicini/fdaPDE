@@ -4,7 +4,7 @@ There are many ways to install this package, but
 not all of them work for Windows users. Here we suggest two that do the job:
 
 1.  Download the .zip folder from GitHub and unzip it on your local PC; then, on the R console, type:
-  install.packages("/path/to/fdaPDE/folder", type=’source’, repos=NULL)
+  install.packages("/path/to/fdaPDE/folder", type="source", repos=NULL)
 2.  From the terminal, run:
   R CMD build <path to folder fdaPDE>
   R CMD INSTALL -l <path name of the R library tree>
