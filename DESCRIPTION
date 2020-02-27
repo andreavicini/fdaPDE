@@ -11,25 +11,25 @@ Authors@R: c(person("Eardi", "Lila", role = c("aut", "cre"),
 		    person("Luca", "Formaggia", role = "aut",
 		     email = " luca.formaggia@polimi.it"))
 Author: Eardi Lila [aut, cre],
-    Laura M. Sangalli [aut],
-    Jim Ramsay [aut],
-    Luca Formaggia [aut]
+	Laura M. Sangalli [aut],
+	Jim Ramsay [aut],
+	Luca Formaggia [aut]
 Maintainer: Eardi Lila <el425@cam.ac.uk>
 Depends:
-    R (>= 3.0.0),
-    geometry,
-    rgl,
-		Matrix,
-		plot3D,
-		plot3Drgl
+	R (>= 3.0.0),
+	geometry,
+	rgl,
+	Matrix,
+	plot3D,
+	plot3Drgl
 Imports:
-		grDevices,
-		graphics
+	grDevices,
+	graphics
 LinkingTo:
 	RcppEigen
 Suggests:
-    MASS,
-    testthat
+	MASS,
+	testthat
 Description: An implementation of regression models with partial differential regularizations, making use of the Finite Element Method. The models efficiently handle data distributed over irregularly shaped domains and can comply with various conditions at the boundaries of the domain. A priori information about the spatial structure of the phenomenon under study can be incorporated in the model via the differential regularization.
 License: CC BY-NC-SA 4.0
 Copyright: See the individual source files for copyrights information
