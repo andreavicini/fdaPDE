@@ -142,10 +142,10 @@ checkSmoothingParametersSize_time<-function(locations = NULL, time_locations=NUL
       stop("'time_locations' must be a column vector")
 
   if(!is.null(time_mesh) && length(time_mesh)==1)
-      stop("'time_mesh' must be of length bigger than 1. Only space time problems are allowed")
+      stop("'time_mesh' must be of length bigger than 1. For only space problems use smooth.FEM")
 
   if(!is.null(time_locations) && length(time_locations)==1)
-      stop("'time_locations' must be of length bigger than 1. Only space time problems are allowed")
+      stop("'time_locations' must be of length bigger than 1. For only space problems use smooth.FEM")
 
 
   if(is.null(locations) && is.null(incidence_matrix))
