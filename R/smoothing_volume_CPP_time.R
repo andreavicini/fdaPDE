@@ -96,7 +96,7 @@ CPP_smooth.volume.FEM.time<-function(locations, time_locations, observations, FE
   ICsol=NA
   if(nrow(IC)==0 && FLAG_PARABOLIC)
   {
-    NobsIC = max(nrow(locations),nrow(incidence_matrix))
+    NobsIC = length(observations)%/%nrow(time_locations)
 
     if(nrow(covariates)==0)
       covariatesIC = covariates

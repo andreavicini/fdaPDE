@@ -150,18 +150,22 @@ checkSmoothingParametersSize_time<-function(locations = NULL, time_locations=NUL
 
   if(is.null(locations) && is.null(incidence_matrix))
   {
-    if(!is.null(time_locations) && is.null(incidence_matrix))
+    if(!is.null(time_locations))
       if(ifelse(class(FEMbasis$mesh) == "MESH.2D", nrow(FEMbasis$mesh$nodes),FEMbasis$mesh$nnodes) != nrow(observations) || ncol(observations) != nrow(time_locations))
         stop("'locations' and 'observations' have incompatible size;")
 
-    if(is.null(time_locations) && is.null(incidence_matrix))
+    if(is.null(time_locations))
     {
-      if(FLAG_PARABOLIC)
+      if(FLAG_PARABOLIC && !is.null(IC))
+      {
         if(ifelse(class(FEMbasis$mesh) == "mesh.2D", nrow(FEMbasis$mesh$nodes),FEMbasis$mesh$nnodes) != nrow(observations) || (nrow(time_mesh)-1) != ncol(observations))
           stop("'locations' and 'observations' have incompatible size;")
-      if(!FLAG_PARABOLIC)
+      }
+      else
+      {
         if(ifelse(class(FEMbasis$mesh) == "mesh.2D", nrow(FEMbasis$mesh$nodes),FEMbasis$mesh$nnodes) != nrow(observations) || nrow(time_mesh) != ncol(observations))
           stop("'locations' and 'observations' have incompatible size;")
+      }
     }
   }
 
