@@ -593,7 +593,7 @@ plot.mesh.3D<-function(mesh,...){
    storage.mode(x$coeff) <- "double"
    storage.mode(x$FLAG_PARABOLIC) <- "integer"
 
-   solution <- .Call("eval_FEM_time_nodes",N,x$mesh_time,t,x$coeff[,lambdaS,lambdaT],x$FLAG_PARABOLIC,package = "fdaPDEtime")
+   solution <- .Call("eval_FEM_time_nodes",N,x$mesh_time,t,x$coeff[,lambdaS,lambdaT],x$FLAG_PARABOLIC,package = "fdaPDE")
    for(i in 1:length(t))
    {
      plot = FEM(solution[(1+(i-1)*N):(N+(i-1)*N)],x$FEMbasis)
