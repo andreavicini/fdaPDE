@@ -115,7 +115,7 @@ CPP_smooth.volume.FEM.time<-function(locations, time_locations, observations, FE
     ICsol <- .Call("regression_Laplace", locations, observations[1:NobsIC],
                   FEMbasis$mesh, FEMbasis$order, mydim, ndim, lambdaSIC, covariatesIC,
                   incidence_matrix, BC$BC_indices, BC$BC_values,
-                  T, as.integer(1), nrealizations, DOF, DOF_matrix, PACKAGE = "fdaPDE")
+                  T, as.integer(1), nrealizations, T, DOF_matrix, PACKAGE = "fdaPDE")
 
     ## shifting the lambdas interval if the best lambda is the smaller one and retry smoothing
     if((ICsol[[4]][1]+1)==1)
@@ -126,7 +126,7 @@ CPP_smooth.volume.FEM.time<-function(locations, time_locations, observations, FE
       ICsol <- .Call("regression_Laplace", locations, observations[1:NobsIC],
                     FEMbasis$mesh, FEMbasis$order, mydim, ndim, lambdaSIC, covariatesIC,
                     incidence_matrix, BC$BC_indices, BC$BC_values,
-                    T, as.integer(1), nrealizations, DOF, DOF_matrix, PACKAGE = "fdaPDE")
+                    T, as.integer(1), nrealizations, T, DOF_matrix, PACKAGE = "fdaPDE")
     }
     else
     {
@@ -139,7 +139,7 @@ CPP_smooth.volume.FEM.time<-function(locations, time_locations, observations, FE
         ICsol <- .Call("regression_Laplace", locations, observations[1:NobsIC],
                       FEMbasis$mesh, FEMbasis$order, mydim, ndim, lambdaSIC, covariatesIC,
                       incidence_matrix, BC$BC_indices, BC$BC_values,
-                      T, as.integer(1), nrealizations, DOF, DOF_matrix, PACKAGE = "fdaPDE")
+                      T, as.integer(1), nrealizations, T, DOF_matrix, PACKAGE = "fdaPDE")
       }
     }
 

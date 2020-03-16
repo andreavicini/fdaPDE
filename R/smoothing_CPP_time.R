@@ -111,7 +111,7 @@ CPP_smooth.FEM.time<-function(locations, time_locations, observations, FEMbasis,
     ICsol <- .Call("regression_Laplace", locations, observations[1:NobsIC],
                   FEMbasis$mesh, FEMbasis$order, mydim, ndim, lambdaSIC, covariatesIC,
                   incidence_matrix, BC$BC_indices, BC$BC_values,
-                  T, as.integer(1), nrealizations, DOF, DOF_matrix, PACKAGE = "fdaPDE")
+                  T, as.integer(1), nrealizations, T, DOF_matrix, PACKAGE = "fdaPDE")
 
     ## shifting the lambdas interval if the best lambda is the smaller one and retry smoothing
     if((ICsol[[4]][1]+1)==1)
@@ -122,7 +122,7 @@ CPP_smooth.FEM.time<-function(locations, time_locations, observations, FEMbasis,
       ICsol <- .Call("regression_Laplace", locations, observations[1:NobsIC],
                     FEMbasis$mesh, FEMbasis$order, mydim, ndim, lambdaSIC, covariatesIC,
                     incidence_matrix, BC$BC_indices, BC$BC_values,
-                    T, as.integer(1), nrealizations, DOF, DOF_matrix, PACKAGE = "fdaPDE")
+                    T, as.integer(1), nrealizations, T, DOF_matrix, PACKAGE = "fdaPDE")
     }
     else
     {
@@ -135,7 +135,7 @@ CPP_smooth.FEM.time<-function(locations, time_locations, observations, FEMbasis,
         ICsol <- .Call("regression_Laplace", locations, observations[1:NobsIC],
                       FEMbasis$mesh, FEMbasis$order, mydim, ndim, lambdaSIC, covariatesIC,
                       incidence_matrix, BC$BC_indices, BC$BC_values,
-                      T, as.integer(1), nrealizations, DOF, DOF_matrix, PACKAGE = "fdaPDE")
+                      T, as.integer(1), nrealizations, T, DOF_matrix, PACKAGE = "fdaPDE")
       }
     }
 
@@ -289,7 +289,7 @@ CPP_smooth.FEM.PDE.time<-function(locations, time_locations, observations, FEMba
                   FEMbasis$mesh, FEMbasis$order, mydim, ndim, lambdaSIC,
                   PDE_parameters$K, PDE_parameters$b, PDE_parameters$c,
                   covariatesIC, incidence_matrix, BC$BC_indices, BC$BC_values,
-                  T, as.integer(1), nrealizations, DOF, DOF_matrix, PACKAGE = "fdaPDE")
+                  T, as.integer(1), nrealizations, T, DOF_matrix, PACKAGE = "fdaPDE")
 
     if((ICsol[[4]][1]+1)==1)
     {
@@ -300,7 +300,7 @@ CPP_smooth.FEM.PDE.time<-function(locations, time_locations, observations, FEMba
                     FEMbasis$mesh, FEMbasis$order, mydim, ndim, lambdaSIC,
                     PDE_parameters$K, PDE_parameters$b, PDE_parameters$c,
                     covariatesIC, incidence_matrix, BC$BC_indices, BC$BC_values,
-                    T, as.integer(1), nrealizations, DOF, DOF_matrix, PACKAGE = "fdaPDE")
+                    T, as.integer(1), nrealizations, T, DOF_matrix, PACKAGE = "fdaPDE")
     }
     else
     {
@@ -313,7 +313,7 @@ CPP_smooth.FEM.PDE.time<-function(locations, time_locations, observations, FEMba
                       FEMbasis$mesh, FEMbasis$order, mydim, ndim, lambdaSIC,
                       PDE_parameters$K, PDE_parameters$b, PDE_parameters$c,
                       covariatesIC, incidence_matrix, BC$BC_indices, BC$BC_values,
-                      T, as.integer(1), nrealizations, DOF, DOF_matrix, PACKAGE = "fdaPDE")
+                      T, as.integer(1), nrealizations, T, DOF_matrix, PACKAGE = "fdaPDE")
       }
     }
 
@@ -476,7 +476,7 @@ CPP_smooth.FEM.PDE.sv.time<-function(locations, time_locations, observations, FE
                   FEMbasis$mesh, FEMbasis$order, mydim, ndim, lambdaSIC,
                   PDE_param_eval$K, PDE_param_eval$b, PDE_param_eval$c, PDE_param_eval$u,
                   covariatesIC, incidence_matrix, BC$BC_indices, BC$BC_values,
-                  T, as.integer(1), nrealizations, DOF, DOF_matrix, PACKAGE = "fdaPDE")
+                  T, as.integer(1), nrealizations, T, DOF_matrix, PACKAGE = "fdaPDE")
 
     if((ICsol[[4]][1]+1)==1)
     {
@@ -487,7 +487,7 @@ CPP_smooth.FEM.PDE.sv.time<-function(locations, time_locations, observations, FE
                     FEMbasis$mesh, FEMbasis$order, mydim, ndim, lambdaSIC,
                     PDE_param_eval$K, PDE_param_eval$b, PDE_param_eval$c, PDE_param_eval$u,
                     covariatesIC, incidence_matrix, BC$BC_indices, BC$BC_values,
-                    T, as.integer(1), nrealizations, DOF, DOF_matrix, PACKAGE = "fdaPDE")
+                    T, as.integer(1), nrealizations, T, DOF_matrix, PACKAGE = "fdaPDE")
     }
     else
     {
@@ -500,7 +500,7 @@ CPP_smooth.FEM.PDE.sv.time<-function(locations, time_locations, observations, FE
                       FEMbasis$mesh, FEMbasis$order, mydim, ndim, lambdaSIC,
                       PDE_param_eval$K, PDE_param_eval$b, PDE_param_eval$c, PDE_param_eval$u,
                       covariatesIC, incidence_matrix, BC$BC_indices, BC$BC_values,
-                      T, as.integer(1), nrealizations, DOF, DOF_matrix, PACKAGE = "fdaPDE")
+                      T, as.integer(1), nrealizations, T, DOF_matrix, PACKAGE = "fdaPDE")
       }
     }
 
