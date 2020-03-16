@@ -358,6 +358,15 @@ void MixedFERegressionBase<InputHandler, IntegratorSpace, ORDER, IntegratorTime,
 	else
 		dataHat = z - LeftMultiplybyQ(z) + LeftMultiplybyQ(psi_*_solution(output_indexS,output_indexT).topRows(psi_.cols()));
 	UInt n = dataHat.rows();
+	if(regressionData_.isSpaceTime())
+		{
+			const std::vector<UInt>& observations_na= regressionData_.getObservationsNA();
+			for(UInt id:observations_na)
+			{
+				dataHat[id]=0;
+			}
+			n-=observations_na.size();
+		}
 
 //! GCV computation
 	_GCV(output_indexS,output_indexT) = (n / ((n-_dof(output_indexS,output_indexT)) * (n-_dof(output_indexS,output_indexT)))) * (z-dataHat).dot(z-dataHat);
@@ -588,7 +597,7 @@ void MixedFERegressionBase<InputHandler,IntegratorSpace,ORDER, IntegratorTime, S
 		MatrixXr X3=X1;
 
 		//define the penalization matrix: note that for separable smoothin should be P=lambdaS*Psk+lambdaT*Ptk
-		// but the second term has been added to X1 for dirichlet boundary conditions  
+		// but the second term has been added to X1 for dirichlet boundary conditions
 		if (regressionData_.isSpaceTime() && regressionData_.getFlagParabolic())
 		{
 			SpMat X2 = R1_+lambdaT*LR0k_;

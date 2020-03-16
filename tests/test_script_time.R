@@ -155,7 +155,6 @@ plot(Sol$fit.FEM.time,1)
 
 rm(list=ls())
 data(horseshoe2D)
-load("~/PACS_project/pacsColliColombo/data/horseshoe2D.RData")
 
 mesh=create.mesh.2D(nodes = boundary_nodes, segments = boundary_segments)
 mesh=refine.mesh.2D(mesh,30,0.03)
