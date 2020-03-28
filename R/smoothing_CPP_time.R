@@ -93,12 +93,22 @@ CPP_smooth.FEM.time<-function(locations, time_locations, observations, FEMbasis,
   if(nrow(IC)==0 && FLAG_PARABOLIC)
   {
     NobsIC = length(observations)%/%nrow(time_locations)
+    notNAIC = which(!is.na(observations[1:NobsIC]))
+    observationsIC = observations[notNAIC]
+
+    if(nrow(locations)==0)
+      locationsIC=locations
+    else
+    {
+      locationsIC = as.matrix(locations[notNAIC,])
+      storage.mode(locationsIC) <- "double"
+    }
 
     if(nrow(covariates)==0)
       covariatesIC = covariates
     else
     {
-      covariatesIC = covariates[1:NobsIC,]
+      covariatesIC = covariates[notNAIC,]
       covariatesIC = as.matrix(covariatesIC)
       storage.mode(covariatesIC) <- "double"
     }
@@ -108,7 +118,7 @@ CPP_smooth.FEM.time<-function(locations, time_locations, observations, FEMbasis,
     lambdaSIC <- as.matrix(lambdaSIC)
     storage.mode(lambdaSIC) <- "double"
     ## call the smoothing function with initial observations to estimates the IC
-    ICsol <- .Call("regression_Laplace", locations, observations[1:NobsIC],
+    ICsol <- .Call("regression_Laplace", locationsIC, observationsIC,
                   FEMbasis$mesh, FEMbasis$order, mydim, ndim, lambdaSIC, covariatesIC,
                   incidence_matrix, BC$BC_indices, BC$BC_values,
                   T, as.integer(1), nrealizations, T, DOF_matrix, PACKAGE = "fdaPDE")
@@ -119,7 +129,7 @@ CPP_smooth.FEM.time<-function(locations, time_locations, observations, FEMbasis,
       lambdaSIC <- 10^seq(-9,-7,0.1)
       lambdaSIC <- as.matrix(lambdaSIC)
       storage.mode(lambdaSIC) <- "double"
-      ICsol <- .Call("regression_Laplace", locations, observations[1:NobsIC],
+      ICsol <- .Call("regression_Laplace", locationsIC, observationsIC,
                     FEMbasis$mesh, FEMbasis$order, mydim, ndim, lambdaSIC, covariatesIC,
                     incidence_matrix, BC$BC_indices, BC$BC_values,
                     T, as.integer(1), nrealizations, T, DOF_matrix, PACKAGE = "fdaPDE")
@@ -132,7 +142,7 @@ CPP_smooth.FEM.time<-function(locations, time_locations, observations, FEMbasis,
         lambdaSIC <- 10^seq(3,5,0.1)
         lambdaSIC <- as.matrix(lambdaSIC)
         storage.mode(lambdaSIC) <- "double"
-        ICsol <- .Call("regression_Laplace", locations, observations[1:NobsIC],
+        ICsol <- .Call("regression_Laplace", locationsIC, observationsIC,
                       FEMbasis$mesh, FEMbasis$order, mydim, ndim, lambdaSIC, covariatesIC,
                       incidence_matrix, BC$BC_indices, BC$BC_values,
                       T, as.integer(1), nrealizations, T, DOF_matrix, PACKAGE = "fdaPDE")

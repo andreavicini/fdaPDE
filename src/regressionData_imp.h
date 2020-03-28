@@ -271,10 +271,27 @@ void RegressionData::setObservationsTime(SEXP Robservations)
 	//for(auto i=0;i<observations_indices_.size();++i)	std::cout<<observations_indices_[i]<<std::endl;
 }
 
+// void RegressionData::setCovariates(SEXP Rcovariates)
+// {
+// 	n_ = INTEGER(Rf_getAttrib(Rcovariates, R_DimSymbol))[0];
+// 	p_ = INTEGER(Rf_getAttrib(Rcovariates, R_DimSymbol))[1];
+//
+// 	covariates_.resize(n_, p_);
+//
+// 	for(auto i=0; i<n_; ++i)
+// 	{
+// 		for(auto j=0; j<p_ ; ++j)
+// 		{
+// 			covariates_(i,j)=REAL(Rcovariates)[i+ n_*j];
+// 		}
+// 	}
+// }
+
 void RegressionData::setCovariates(SEXP Rcovariates)
 {
 	n_ = INTEGER(Rf_getAttrib(Rcovariates, R_DimSymbol))[0];
 	p_ = INTEGER(Rf_getAttrib(Rcovariates, R_DimSymbol))[1];
+	UInt k=0;
 
 	covariates_.resize(n_, p_);
 
@@ -282,7 +299,15 @@ void RegressionData::setCovariates(SEXP Rcovariates)
 	{
 		for(auto j=0; j<p_ ; ++j)
 		{
-			covariates_(i,j)=REAL(Rcovariates)[i+ n_*j];
+			if(observations_na_.size()>k && i==observations_na_[k])
+			{
+				covariates_(i,j)=0;
+				k++;
+			}
+			else
+			{
+				covariates_(i,j)=REAL(Rcovariates)[i+ n_*j];
+			}
 		}
 	}
 }
