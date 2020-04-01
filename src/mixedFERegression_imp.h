@@ -296,23 +296,20 @@ void MixedFERegressionBase<InputHandler,IntegratorSpace,ORDER, IntegratorTime, S
 
 	if (regressionData_.getCovariates().rows() == 0) //no covariate
 	{
-		if (regressionData_.isLocationsByNodes())
+		if (regressionData_.isLocationsByNodes() && !regressionData_.isSpaceTime())
 		{
-			if(!regressionData_.isSpaceTime())
-			{
 				for (auto i=0; i<nlocations;++i)
 				{
 					auto index_i = regressionData_.getObservationsIndices()[i];
 					rightHandData(index_i) = regressionData_.getObservations()[i];
 				}
-			}
-			else
+		}
+		else if (regressionData_.isLocationsByNodes() && regressionData_.isSpaceTime() && regressionData_.getFlagParabolic())
+		{
+			for (auto i=0; i<regressionData_.getObservationsIndices().size();++i)
 			{
-				for (auto i=0; i<regressionData_.getObservationsIndices().size();++i)
-				{
-					auto index_i = regressionData_.getObservationsIndices()[i];
-					rightHandData(index_i) = regressionData_.getObservations()[index_i];
-				}
+				auto index_i = regressionData_.getObservationsIndices()[i];
+				rightHandData(index_i) = regressionData_.getObservations()[index_i];
 			}
 		}
 		else if (regressionData_.getNumberOfRegions() == 0) //pointwise data
@@ -333,6 +330,7 @@ void MixedFERegressionBase<InputHandler,IntegratorSpace,ORDER, IntegratorTime, S
 		rightHandData=psi_.transpose()*A_.asDiagonal()*LeftMultiplybyQ(regressionData_.getObservations());
 	}
 }
+
 
 template<typename InputHandler, typename IntegratorSpace, UInt ORDER, typename IntegratorTime, UInt SPLINE_DEGREE, UInt ORDER_DERIVATIVE, UInt mydim, UInt ndim>
 void MixedFERegressionBase<InputHandler,IntegratorSpace,ORDER, IntegratorTime, SPLINE_DEGREE, ORDER_DERIVATIVE, mydim, ndim>::computeDegreesOfFreedom(UInt output_indexS, UInt output_indexT, Real lambdaS, Real lambdaT)
